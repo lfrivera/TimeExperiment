@@ -6,28 +6,57 @@ import java.io.FileReader;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.LinkedList;
-import java.util.Map.Entry;
-import java.util.Queue;
+//import java.util.Map.Entry;
 
 import experiment.model.Datagram;
 
 public class Main{
 	
-	public final static String DATAGRAMS_PATH = "datagrams/datagrams.csv";
+	public final static String DATAGRAMS_PATH = "data/datagrams.csv";
+	public final static String LINESTOPS_PATH = "data/linestops.csv";
 	
 	public static void main(String[] args) {
 		readDatagrams(131);
 	}
 	
-	public static File getSourceFile() {
-		return new File(DATAGRAMS_PATH);
+	public static File getSourceFile(String path) {
+		return new File(path);
 	}
 	
+	public static ArrayList<Long>  stopsSequence(long lineId) {
+		
+		BufferedReader br;
+		String text = "";
+		File sourceFile = getSourceFile(LINESTOPS_PATH);
+		ArrayList<Long> stops = new ArrayList<Long>();
+		
+		try {
+			br = new BufferedReader(new FileReader(sourceFile));
+			text = br.readLine();
+			text = br.readLine();
+			
+			while (text!=null && !text.equals("")){
+				String[] data = text.split(";");
+				if(data[3].equals(lineId+"")) {
+					if(!stops.contains(Long.parseLong(data[4]))) {
+						stops.add(Long.parseLong(data[4]));
+					}
+				}
+				
+				text = br.readLine();
+			}
+			
+		}catch (Exception e) {
+			e.printStackTrace();
+		}
+		
+		return stops; 
+	}
 	public static ArrayList<Datagram> readDatagrams(long lineId){
 		
-		ArrayList<Datagram> operationaTravels = new ArrayList<Datagram>();
-		HashMap<Long, Queue<String>> hash = new HashMap<>(); 
-		File sourceFile = getSourceFile();
+		HashMap<Long, Datagram> hash = new HashMap<>(); 
+		HashMap<Long, LinkedList<Datagram>> hash2 = new HashMap<>(); 
+		File sourceFile = getSourceFile(DATAGRAMS_PATH);
 		BufferedReader br;
 		String text = "";
 		
@@ -53,14 +82,25 @@ public class Main{
 					long tripId = Long.parseLong(data[7]);;
 					
 					Datagram datagram = new Datagram(datagramData, busId, stopId, odometer, longitude, latitude, taskId, lineId, tripId);
-					operationaTravels.add(datagram);
+					
 					
 					if(hash.containsKey(stopId)) {
-						hash.get(stopId).add(datagramData+"-"+busId);
+						
+						Datagram d = hash.get(stopId);
+						
+						if(d.getBusId()!=busId) {
+							hash.put(stopId,datagram);
+							hash2.get(stopId).add(datagram);
+						}
+						
+						
 					}else {
-						LinkedList<String> list = new LinkedList<>();
-						list.add(datagramData+"-"+busId);
-						hash.put(stopId,list);
+						
+						hash.put(stopId,datagram);
+						LinkedList<Datagram> list = new LinkedList<>();
+						list.add(datagram);
+						hash2.put(stopId, list);
+						
 					}
 					
 //					System.out.println(datagram);
@@ -74,12 +114,25 @@ public class Main{
 			e.printStackTrace();
 		}
 
-		for (Entry<Long, Queue<String>> entry : hash.entrySet()) {
-			System.out.println("================> "+entry.getKey());
-		    for (String data : entry.getValue()) {
-				System.out.println(data);
+		ArrayList<Long> stops = stopsSequence(131);
+		
+		for (int i = 0; i < stops.size(); i++) {
+			
+			if(hash2.containsKey(stops.get(i))) {
+				System.out.println("================> "+stops.get(i));
+				for (Datagram data : hash2.get(stops.get(i))) {
+					System.out.println(data);
+				}
 			}
+			
 		}
+		
+//		for (Entry<Long, LinkedList<Datagram>> entry : hash2.entrySet()) {
+//			System.out.println("================> "+entry.getKey());
+//		    for (Datagram data : entry.getValue()) {
+//				System.out.println(data);
+//			}
+//		}
 		return null;
 	}
 }
