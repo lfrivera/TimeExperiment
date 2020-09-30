@@ -3,11 +3,11 @@ package experiment.StopTime;
 import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileReader;
-import java.sql.Date;
-import java.text.DateFormat;
-import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.LinkedList;
+import java.util.Map.Entry;
+import java.util.Queue;
 
 import experiment.model.Datagram;
 
@@ -15,13 +15,18 @@ public class Main{
 	
 	public final static String DATAGRAMS_PATH = "datagrams/datagrams.csv";
 	
-	public File getSourceFile() {
+	public static void main(String[] args) {
+		readDatagrams(131);
+	}
+	
+	public static File getSourceFile() {
 		return new File(DATAGRAMS_PATH);
 	}
 	
-	public ArrayList<Datagram> readDatagrams(long lineId){
+	public static ArrayList<Datagram> readDatagrams(long lineId){
 		
 		ArrayList<Datagram> operationaTravels = new ArrayList<Datagram>();
+		HashMap<Long, Queue<String>> hash = new HashMap<>(); 
 		File sourceFile = getSourceFile();
 		BufferedReader br;
 		String text = "";
@@ -39,18 +44,27 @@ public class Main{
 				if(data[7].equals(lineId+"")) {
 					
 					String datagramData = data[0];
-					long busId = 0;
-					long stopId = 0;
-					long odometer = 0;
-					long longitude = 0;
-					long latitude = 0;
-					long taskId = 0;
-					long tripId = 0;
+					long busId = Long.parseLong(data[1]);
+					long stopId = Long.parseLong(data[2]);
+					long odometer = Long.parseLong(data[3]);;
+					long longitude = Long.parseLong(data[4]);;
+					long latitude = Long.parseLong(data[5]);;
+					long taskId = Long.parseLong(data[6]);;
+					long tripId = Long.parseLong(data[7]);;
 					
 					Datagram datagram = new Datagram(datagramData, busId, stopId, odometer, longitude, latitude, taskId, lineId, tripId);
 					operationaTravels.add(datagram);
+					
+					if(hash.containsKey(stopId)) {
+						hash.get(stopId).add(datagramData+"-"+busId);
+					}else {
+						LinkedList<String> list = new LinkedList<>();
+						list.add(datagramData+"-"+busId);
+						hash.put(stopId,list);
+					}
+					
+//					System.out.println(datagram);
 				}
-				
 				
 				text = br.readLine();
 			}
@@ -60,6 +74,12 @@ public class Main{
 			e.printStackTrace();
 		}
 
+		for (Entry<Long, Queue<String>> entry : hash.entrySet()) {
+			System.out.println("================> "+entry.getKey());
+		    for (String data : entry.getValue()) {
+				System.out.println(data);
+			}
+		}
 		return null;
 	}
 }

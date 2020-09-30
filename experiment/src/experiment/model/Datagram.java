@@ -24,6 +24,17 @@ public class Datagram {
 		this.tripId = tripId;
 	}
 
+	
+	
+	@Override
+	public String toString() {
+		return "Datagram [datagramData=" + datagramData + ", busId=" + busId + ", stopId=" + stopId + ", odometer="
+				+ odometer + ", longitude=" + longitude + ", latitude=" + latitude + ", taskId=" + taskId + ", lineId="
+				+ lineId + ", tripId=" + tripId + "]";
+	}
+
+
+
 	public String getDatagramData() {
 		return datagramData;
 	}
