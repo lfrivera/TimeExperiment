@@ -1,4 +1,4 @@
-package experiment.StopTime;
+package experiment.BusStopTime;
 
 import java.io.BufferedReader;
 import java.io.File;
@@ -23,12 +23,79 @@ public class Main{
 		return new File(path);
 	}
 	
-	public static ArrayList<Long>  stopsSequence(long lineId) {
+	@SuppressWarnings("resource")
+	public static String firstBus(long lineId) {
+		
+		File sourceFile = getSourceFile(DATAGRAMS_PATH);
+		BufferedReader br;
+		String text = "";
+		
+		try {
+			
+			br = new BufferedReader(new FileReader(sourceFile));
+			text = br.readLine();
+			text = br.readLine();
+			
+			while(text!=null && !text.equals("")){
+				
+				String[] data = text.split(",");
+				
+				if(data[7].equals(lineId+"")) {
+					return data[1];
+				}
+				text = br.readLine();
+			}
+
+			br.close();
+		} catch (Exception e) {
+			e.printStackTrace();
+		}
+		
+		return null;
+	}
+	
+	public static ArrayList<Long> stopSequenceBus(long lineId, String busId){
+
+		ArrayList<Long> stops = new ArrayList<Long>();
+		File sourceFile = getSourceFile(DATAGRAMS_PATH);
+		BufferedReader br;
+		String text = "";
+		
+		try {
+			
+			br = new BufferedReader(new FileReader(sourceFile));
+			text = br.readLine();
+			text = br.readLine();
+
+			
+			while(text!=null && !text.equals("")){
+				
+				String [] data = text.split(",");
+				
+				if(data[7].equals(lineId+"") && data[1].equals(busId)) {
+					if(!stops.contains(Long.parseLong(data[2]))) {
+						stops.add(Long.parseLong(data[2]));
+					}
+				}
+				
+				text = br.readLine();
+			}
+
+			br.close();
+		} catch (Exception e) {
+			e.printStackTrace();
+		}
+		
+		return stops;
+	}
+	
+	public static ArrayList<Long> stopSequence(long lineId) {
 		
 		BufferedReader br;
 		String text = "";
 		File sourceFile = getSourceFile(LINESTOPS_PATH);
 		ArrayList<Long> stops = new ArrayList<Long>();
+		
 		
 		try {
 			br = new BufferedReader(new FileReader(sourceFile));
@@ -52,6 +119,7 @@ public class Main{
 		
 		return stops; 
 	}
+	
 	public static ArrayList<Datagram> readDatagrams(long lineId){
 		
 		HashMap<Long, Datagram> hash = new HashMap<>(); 
@@ -75,11 +143,11 @@ public class Main{
 					String datagramData = data[0];
 					long busId = Long.parseLong(data[1]);
 					long stopId = Long.parseLong(data[2]);
-					long odometer = Long.parseLong(data[3]);;
-					long longitude = Long.parseLong(data[4]);;
-					long latitude = Long.parseLong(data[5]);;
-					long taskId = Long.parseLong(data[6]);;
-					long tripId = Long.parseLong(data[7]);;
+					long odometer = Long.parseLong(data[3]);
+					long longitude = Long.parseLong(data[4]);
+					long latitude = Long.parseLong(data[5]);
+					long taskId = Long.parseLong(data[6]);
+					long tripId = Long.parseLong(data[8]);
 					
 					Datagram datagram = new Datagram(datagramData, busId, stopId, odometer, longitude, latitude, taskId, lineId, tripId);
 					
@@ -114,25 +182,19 @@ public class Main{
 			e.printStackTrace();
 		}
 
-		ArrayList<Long> stops = stopsSequence(131);
+		ArrayList<Long> stops = stopSequenceBus(lineId,firstBus(lineId));
 		
 		for (int i = 0; i < stops.size(); i++) {
 			
 			if(hash2.containsKey(stops.get(i))) {
 				System.out.println("================> "+stops.get(i));
 				for (Datagram data : hash2.get(stops.get(i))) {
-					System.out.println(data);
+					if(data.getBusId()==999)
+						System.out.println(data);
 				}
 			}
 			
 		}
-		
-//		for (Entry<Long, LinkedList<Datagram>> entry : hash2.entrySet()) {
-//			System.out.println("================> "+entry.getKey());
-//		    for (Datagram data : entry.getValue()) {
-//				System.out.println(data);
-//			}
-//		}
 		return null;
 	}
 }
