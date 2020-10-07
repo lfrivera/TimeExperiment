@@ -3,12 +3,18 @@ package experiment.BusStopTime;
 import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileReader;
+import java.sql.Date;
+import java.text.DateFormat;
+import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.LinkedList;
 //import java.util.Map.Entry;
+import java.util.Locale;
 
 import experiment.model.Datagram;
+import experiment.model.SITMLineStop;
+import experiment.model.SITMStop;
 
 public class Main{
 	
@@ -23,102 +29,131 @@ public class Main{
 		return new File(path);
 	}
 	
-	@SuppressWarnings("resource")
-	public static String firstBus(long lineId) {
-		
-		File sourceFile = getSourceFile(DATAGRAMS_PATH);
-		BufferedReader br;
-		String text = "";
-		
-		try {
-			
-			br = new BufferedReader(new FileReader(sourceFile));
-			text = br.readLine();
-			text = br.readLine();
-			
-			while(text!=null && !text.equals("")){
-				
-				String[] data = text.split(",");
-				
-				if(data[7].equals(lineId+"")) {
-					return data[1];
-				}
-				text = br.readLine();
-			}
+	public static ArrayList<SITMLineStop> findAllLineStopByPlanVersion(long planVersionId) {
 
+		String path = new File("data/linestops.csv").getAbsolutePath();
+		ArrayList<SITMLineStop> lineStops = new ArrayList<>();
+
+		BufferedReader br;
+		try {
+			br = new BufferedReader(new FileReader(path));
+			String[] columns = null;
+			String line = br.readLine();
+			line = br.readLine();
+
+			while (line != null) {
+				columns = line.split(";");
+
+				if (!columns[0].isEmpty() && columns[5].equals(planVersionId + "")) {
+					
+					long lineStopid = Long.parseLong(columns[0]);
+					long stopsequence = Long.parseLong(columns[1]);
+					long orientation = Long.parseLong(columns[2]);
+					long lineid = Long.parseLong(columns[3]);
+					long stopid = Long.parseLong(columns[4]);
+					long planVersionid = Long.parseLong(columns[5]);
+					long lineVariant = Long.parseLong(columns[6]);
+					DateFormat dateFormat = new SimpleDateFormat("dd-MMM-yy", Locale.US);
+					Date registerDate = new Date(dateFormat.parse(columns[7]).getTime());
+					long lineVariantType = Long.parseLong(columns[8]);
+					
+					lineStops.add(new SITMLineStop(lineStopid, stopsequence, orientation, lineid, stopid,planVersionid, lineVariant, registerDate, lineVariantType));
+				}
+				
+				line = br.readLine();
+			}
+			
 			br.close();
 		} catch (Exception e) {
 			e.printStackTrace();
 		}
-		
-		return null;
+		return lineStops;
 	}
 	
-	public static ArrayList<Long> stopSequenceBus(long lineId, String busId){
+	public static ArrayList<SITMStop> findAllStopsByPlanVersion(long planVersionId) {
 
-		ArrayList<Long> stops = new ArrayList<Long>();
-		File sourceFile = getSourceFile(DATAGRAMS_PATH);
+		ArrayList<SITMStop> stops = new ArrayList<>();
+		String path = new File("data/stops.csv").getAbsolutePath();
+
 		BufferedReader br;
-		String text = "";
-		
+
 		try {
-			
-			br = new BufferedReader(new FileReader(sourceFile));
-			text = br.readLine();
-			text = br.readLine();
+			br = new BufferedReader(new FileReader(path));
+			String[] columns = null;
+			String line = br.readLine();
+			line = br.readLine();
 
-			
-			while(text!=null && !text.equals("")){
-				
-				String [] data = text.split(",");
-				
-				if(data[7].equals(lineId+"") && data[1].equals(busId)) {
-					if(!stops.contains(Long.parseLong(data[2]))) {
-						stops.add(Long.parseLong(data[2]));
+			while (line != null) {
+				columns = line.split(";");
+
+				if (!columns[0].isEmpty() && columns[1].equals(planVersionId + "")
+						&& !columns[6].contains("#") && !columns[6].equals("0")
+						&& !columns[7].contains("#") && !columns[7].equals("0")) {
+
+					String longName = columns[3];
+					String shortName = columns[2];
+					long stopId = Long.parseLong(columns[0]);
+
+					double gPSX = 0;
+					double gPSY = 0;
+					double decimalLongitude = 0;
+					double decimalLactitude = 0;
+
+					if (!columns[4].isEmpty()) {
+						gPSX = Double.parseDouble(columns[4]) / 10000000;
 					}
-				}
-				
-				text = br.readLine();
-			}
+					if (!columns[5].isEmpty()) {
+						gPSY = Double.parseDouble(columns[5]) / 10000000;
+					}
+					if (!columns[6].isEmpty()) {
+						String origi = columns[6].replace(".", "");
+						StringBuffer str = new StringBuffer(origi);
+						str.insert(3, ".");
+						decimalLongitude = Double.parseDouble(str.toString());
+					}
+					if (!columns[7].isEmpty()) {
+						String origi = columns[7].replace(".", "");
+						StringBuffer str = new StringBuffer(origi);
+						str.insert(1, ".");
+						decimalLactitude = Double.parseDouble(str.toString());
+					}
 
+					stops.add(new SITMStop(stopId, shortName, longName, gPSX, gPSY, decimalLongitude,decimalLactitude, planVersionId));
+				}
+
+				line = br.readLine();
+			}
 			br.close();
 		} catch (Exception e) {
 			e.printStackTrace();
 		}
-		
+
 		return stops;
 	}
 	
-	public static ArrayList<Long> stopSequence(long lineId) {
-		
-		BufferedReader br;
-		String text = "";
-		File sourceFile = getSourceFile(LINESTOPS_PATH);
-		ArrayList<Long> stops = new ArrayList<Long>();
-		
-		
-		try {
-			br = new BufferedReader(new FileReader(sourceFile));
-			text = br.readLine();
-			text = br.readLine();
-			
-			while (text!=null && !text.equals("")){
-				String[] data = text.split(";");
-				if(data[3].equals(lineId+"")) {
-					if(!stops.contains(Long.parseLong(data[4]))) {
-						stops.add(Long.parseLong(data[4]));
+	public static ArrayList<SITMStop> findAllStopsByLine(long planVersionId, long lineId) {
+
+		ArrayList<SITMStop> stopsByLine = new ArrayList<>();
+		ArrayList<SITMStop> stops = findAllStopsByPlanVersion(planVersionId);
+		ArrayList<SITMLineStop> lineStops = findAllLineStopByPlanVersion(planVersionId);
+
+		for (int i = 0; i < lineStops.size(); i++) {
+			SITMLineStop lineStop = (SITMLineStop) lineStops.get(i);
+
+			if (lineStop.getLineId() == lineId) {
+
+				for (int j = 0; j < stops.size(); j++) {
+					SITMStop stop = (SITMStop) stops.get(j);
+					if (stop.getStopId() == lineStop.getStopId()) {
+						stopsByLine.add(stop);
 					}
 				}
-				
-				text = br.readLine();
 			}
-			
-		}catch (Exception e) {
-			e.printStackTrace();
 		}
-		
-		return stops; 
+
+		return stopsByLine;
 	}
+	
 	
 	public static ArrayList<Datagram> readDatagrams(long lineId){
 		
@@ -182,14 +217,14 @@ public class Main{
 			e.printStackTrace();
 		}
 
-		ArrayList<Long> stops = stopSequenceBus(lineId,firstBus(lineId));
+		ArrayList<SITMStop> stops = findAllStopsByLine(261,lineId);
 		
 		for (int i = 0; i < stops.size(); i++) {
 			
-			if(hash2.containsKey(stops.get(i))) {
-				System.out.println("================> "+stops.get(i));
-				for (Datagram data : hash2.get(stops.get(i))) {
-					if(data.getBusId()==999)
+			if(hash2.containsKey(stops.get(i).getStopId())) {
+				System.out.println("================> "+stops.get(i).getLongName());
+				for (Datagram data : hash2.get(stops.get(i).getStopId())) {
+					//if(data.getBusId()==999)
 						System.out.println(data);
 				}
 			}
