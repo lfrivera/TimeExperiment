@@ -8,7 +8,6 @@ import java.text.DateFormat;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.HashMap;
-import java.util.LinkedList;
 //import java.util.Map.Entry;
 import java.util.Locale;
 
@@ -157,8 +156,17 @@ public class Main{
 	
 	public static ArrayList<Datagram> readDatagrams(long lineId){
 		
-		HashMap<Long, Datagram> hash = new HashMap<>(); 
-		HashMap<Long, LinkedList<Datagram>> hash2 = new HashMap<>(); 
+		ArrayList<SITMStop> stops = findAllStopsByLine(261,lineId);
+		HashMap<Long, SITMStop> stopsLngLat = new HashMap<>(); 
+		HashMap<Long, ArrayList<Datagram>> stopsBuses = new HashMap<>(); 
+		
+		for (int i = 0; i < stops.size(); i++) {
+			if(!stopsLngLat.containsKey(stops.get(i).getStopId())) {
+				stopsLngLat.put(stops.get(i).getStopId(), stops.get(i));
+				stopsBuses.put(stops.get(i).getStopId(), new ArrayList<Datagram>());
+			}	
+		}
+		
 		File sourceFile = getSourceFile(DATAGRAMS_PATH);
 		BufferedReader br;
 		String text = "";
@@ -179,30 +187,36 @@ public class Main{
 					long busId = Long.parseLong(data[1]);
 					long stopId = Long.parseLong(data[2]);
 					long odometer = Long.parseLong(data[3]);
-					long longitude = Long.parseLong(data[4]);
-					long latitude = Long.parseLong(data[5]);
+					double longitude = Long.parseLong(data[4]);
+					double latitude = Long.parseLong(data[5]);
 					long taskId = Long.parseLong(data[6]);
 					long tripId = Long.parseLong(data[8]);
 					
 					Datagram datagram = new Datagram(datagramData, busId, stopId, odometer, longitude, latitude, taskId, lineId, tripId);
 					
 					
-					if(hash.containsKey(stopId)) {
+					if(stopsBuses.containsKey(stopId)) {
 						
-						Datagram d = hash.get(stopId);
+//						ArrayList<Datagram> datagrams = stopsBuses.get(stopId);
+						SITMStop stop = stopsLngLat.get(stopId);
 						
-						if(d.getBusId()!=busId) {
-							hash.put(stopId,datagram);
-							hash2.get(stopId).add(datagram);
+						double longitudeLng = longitude / 10000000;
+						double latitudeLng = latitude  / 10000000;
+						
+						boolean lng = (latitudeLng <= (stop.getDecimalLatitude()+0.005)) && (latitudeLng >= (stop.getDecimalLatitude()-0.005));
+						boolean ltd = (longitudeLng <= (stop.getDecimalLongitude()+0.005)) && (longitudeLng >= (stop.getDecimalLongitude()-0.005));
+						boolean isin = false;
+						
+						if( lng && ltd ) {
+							stopsBuses.get(stopId).add(datagram);
+//							for (int i = 0; i < datagrams.size(); i++) {
+//								if(datagrams.get(i).getBusId()==busId) {
+//									isin = true;
+//									i = datagrams.size();
+//								}
+//							}
+							
 						}
-						
-						
-					}else {
-						
-						hash.put(stopId,datagram);
-						LinkedList<Datagram> list = new LinkedList<>();
-						list.add(datagram);
-						hash2.put(stopId, list);
 						
 					}
 					
@@ -216,14 +230,12 @@ public class Main{
 		} catch (Exception e) {
 			e.printStackTrace();
 		}
-
-		ArrayList<SITMStop> stops = findAllStopsByLine(261,lineId);
 		
 		for (int i = 0; i < stops.size(); i++) {
 			
-			if(hash2.containsKey(stops.get(i).getStopId())) {
+			if(stopsBuses.containsKey(stops.get(i).getStopId())) {
 				System.out.println("================> "+stops.get(i).getLongName());
-				for (Datagram data : hash2.get(stops.get(i).getStopId())) {
+				for (Datagram data : stopsBuses.get(stops.get(i).getStopId())) {
 					//if(data.getBusId()==999)
 						System.out.println(data);
 				}

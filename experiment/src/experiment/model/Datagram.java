@@ -6,13 +6,13 @@ public class Datagram {
 	private long busId;
 	private long stopId;
 	private long odometer;
-	private long  longitude;
-	private long latitude;
+	private double longitude;
+	private double latitude;
 	private long taskId;
 	private long lineId;
 	private long tripId;
 	
-	public Datagram(String datagramData, long busId, long stopId, long odometer, long longitude, long latitude, long taskId, long lineId, long tripId) {
+	public Datagram(String datagramData, long busId, long stopId, long odometer, double longitude, double latitude, long taskId, long lineId, long tripId) {
 		this.datagramData = datagramData;
 		this.busId = busId;
 		this.stopId = stopId;
@@ -67,19 +67,19 @@ public class Datagram {
 		this.odometer = odometer;
 	}
 
-	public long getLongitude() {
+	public double getLongitude() {
 		return longitude;
 	}
 
-	public void setLongitude(long longitude) {
+	public void setLongitude(double longitude) {
 		this.longitude = longitude;
 	}
 
-	public long getLatitude() {
+	public double getLatitude() {
 		return latitude;
 	}
 
-	public void setLatitude(long latitude) {
+	public void setLatitude(double latitude) {
 		this.latitude = latitude;
 	}
 
