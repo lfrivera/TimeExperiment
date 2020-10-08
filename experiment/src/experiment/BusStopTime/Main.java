@@ -153,19 +153,34 @@ public class Main{
 		return stopsByLine;
 	}
 	
+	public static boolean isInSameStop(ArrayList<Datagram> datagrams, Datagram datagram, SITMStop stop) {
+		
+		double longitudeNum = datagram.getLongitude() / 10000000;
+		double latitudeNum = datagram.getLatitude()  / 10000000;
+		
+		boolean lng = (latitudeNum <= (stop.getDecimalLatitude()+0.005)) && (latitudeNum >= (stop.getDecimalLatitude()-0.005));
+		boolean ltd = (longitudeNum <= (stop.getDecimalLongitude()+0.005)) && (longitudeNum >= (stop.getDecimalLongitude()-0.005));
+			
+		if(lng && ltd ) {
+				return true;
+		}else {
+			return false;
+		}
+	}
 	
 	public static ArrayList<Datagram> readDatagrams(long lineId){
 		
+		DateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd hh:mm:ss");
 		ArrayList<SITMStop> stops = findAllStopsByLine(261,lineId);
 		HashMap<Long, SITMStop> stopsLngLat = new HashMap<>(); 
 		HashMap<Long, ArrayList<Datagram>> stopsBuses = new HashMap<>(); 
-		HashMap<Long, ArrayList<String>> stopsTimes = new HashMap<>(); 
+		HashMap<Long, ArrayList<Long[]>> stopsTimes = new HashMap<>(); 
 		
 		for (int i = 0; i < stops.size(); i++) {
 			if(!stopsLngLat.containsKey(stops.get(i).getStopId())) {
 				stopsLngLat.put(stops.get(i).getStopId(), stops.get(i));
 				stopsBuses.put(stops.get(i).getStopId(), new ArrayList<Datagram>());
-				stopsTimes.put(stops.get(i).getStopId(), new ArrayList<String>());
+				stopsTimes.put(stops.get(i).getStopId(), new ArrayList<Long[]>());
 			}	
 		}
 		
@@ -202,34 +217,31 @@ public class Main{
 						ArrayList<Datagram> datagrams = stopsBuses.get(stopId);
 						SITMStop stop = stopsLngLat.get(stopId);
 						
-						double longitudeNum = longitude / 10000000;
-						double latitudeNum = latitude  / 10000000;
-						
-//						System.out.println(stop.getDecimalLatitude()+" "+latitudeNum);
-//						System.out.println(stop.getDecimalLongitude()+" "+longitudeNum);
-						
-						boolean lng = (latitudeNum <= (stop.getDecimalLatitude()+0.005)) && (latitudeNum >= (stop.getDecimalLatitude()-0.005));
-						boolean ltd = (longitudeNum <= (stop.getDecimalLongitude()+0.005)) && (longitudeNum >= (stop.getDecimalLongitude()-0.005));
 						boolean isin = false;
 						int datagramIndex = 0;
 							
 						for (int i = 0; i < datagrams.size(); i++) {
-							if(datagrams.get(i).getBusId()==busId) {
+							if(datagrams.get(i).getBusId()==datagram.getBusId()) {
 								isin = true;
 								datagramIndex = i;
 								i = datagrams.size();
 							}
 						}
-							
-						if(lng && ltd ) {
-							if( !isin ) {
+						
+						boolean x = isInSameStop(datagrams, datagram, stop);
+						
+						if(x) {
+							if(!isin) {
 								stopsBuses.get(stopId).add(datagram);
 							}
-						}else if (isin){
-							String times = datagram.getBusId()+": "+datagrams.get(datagramIndex).getDatagramData()+" - "+ datagram.getDatagramData();
+						}else if(!x && isin){
+							
+							Long[] times = new Long[3];
+							times[0] = datagram.getBusId();
+							times[1] = dateFormat.parse(datagrams.get(datagramIndex).getDatagramData()).getTime();
+							times[2] = dateFormat.parse(datagram.getDatagramData()).getTime();;
 							datagrams.remove(datagramIndex);
 							stopsTimes.get(stopId).add(times);
-							
 						}
 									
 					}
@@ -247,9 +259,9 @@ public class Main{
 			
 			if(stopsTimes.containsKey(stops.get(i).getStopId())) {
 				System.out.println("================> "+stops.get(i).getLongName());
-				for (String data : stopsTimes.get(stops.get(i).getStopId())) {
+				for (Long[] data : stopsTimes.get(stops.get(i).getStopId())) {
 //					if(data.getBusId()==308)
-						System.out.println(data);
+						System.out.println(data[0]+": "+data[1]+"->"+data[2]);
 				}
 			}
 			
