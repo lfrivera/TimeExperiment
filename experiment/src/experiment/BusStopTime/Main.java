@@ -6,6 +6,7 @@ import java.io.FileReader;
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.HashMap;
 
 import experiment.model.Datagram;
@@ -36,6 +37,7 @@ public class Main {
 		}
 	}
 
+	// Note: the time of the buses are organize by exit time
 	public static HashMap<Long, ArrayList<Long[]>> readDatagrams(long lineId) {
 
 		DateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd hh:mm:ss");
@@ -77,16 +79,15 @@ public class Main {
 					long taskId = Long.parseLong(data[6]);
 					long tripId = Long.parseLong(data[8]);
 
-					Datagram datagram = new Datagram(datagramData, busId, stopId, odometer, longitude, latitude, taskId,
-							lineId, tripId);
+					Datagram datagram = new Datagram(datagramData, busId, stopId, odometer, longitude, latitude, taskId, lineId, tripId);
 
 					if (stopsBuses.containsKey(stopId)) {
 
 						ArrayList<Datagram> datagrams = stopsBuses.get(stopId);
 						SITMStop stop = stopsLngLat.get(stopId);
-
+						
 						boolean isin = false;
-						int datagramIndex = 0;
+						int datagramIndex = -1;
 
 						for (int i = 0; i < datagrams.size(); i++) {
 							if (datagrams.get(i).getBusId() == datagram.getBusId()) {
@@ -108,7 +109,6 @@ public class Main {
 							times[0] = datagram.getBusId();
 							times[1] = dateFormat.parse(datagrams.get(datagramIndex).getDatagramData()).getTime();
 							times[2] = dateFormat.parse(datagram.getDatagramData()).getTime();
-							;
 							datagrams.remove(datagramIndex);
 							stopsTimes.get(stopId).add(times);
 						}
@@ -137,8 +137,9 @@ public class Main {
 			
 			if(stopsTimes.containsKey(stops.get(i).getStopId())) {
 				System.out.println("================> "+stops.get(i).getLongName());
-				
+
 				for (Long[] data : stopsTimes.get(stops.get(i).getStopId())) {
+					
 	//				if(data.getBusId()==308)
 					if(initialTime == 0 && lastTime == 0) {
 						initialTime = data[1];
@@ -147,7 +148,7 @@ public class Main {
 						if(data[1] >= initialTime && data[1] <= lastTime) {
 							lastTime = data[2];
 						}else if(data[1] > lastTime){
-							System.out.println("actualbus "+data[1]+" fecha inicial anterior "+initialTime+" fechafinal del anterior "+lastTime);
+//						    System.out.println("actualbus "+data[1]+" fecha inicial anterior "+initialTime+" fechafinal del anterior "+lastTime);
 							long waitingTime = (data[1]-lastTime)/1000;
 							System.out.println(data[0]+": "+waitingTime);
 							initialTime = data[1];
