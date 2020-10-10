@@ -9,13 +9,61 @@ import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Locale;
 
+import experiment.model.Datagram;
 import experiment.model.SITMLineStop;
 import experiment.model.SITMStop;
 
 public class DataSource {
 
+	public final static String DATAGRAMS_PATH = "data/datagrams.csv";
+	public final static String LINESTOPS_PATH = "data/linestops.csv";
+	
 	public static File getSourceFile(String path) {
 		return new File(path);
+	}
+	
+	public static ArrayList<Datagram> findAllDatagrams(long lineId){
+		
+		File sourceFile = DataSource.getSourceFile(DATAGRAMS_PATH);
+		ArrayList<Datagram> datagrams = new ArrayList<>();
+		BufferedReader br;
+		String text = "";
+
+		try {
+
+			br = new BufferedReader(new FileReader(sourceFile));
+			text = br.readLine();
+			text = br.readLine();
+
+			while (text != null && !text.equals("")) {
+
+				String[] data = text.split(",");
+
+				if (data[7].equals(lineId + "")) {
+
+					String datagramData = data[0];
+					long busId = Long.parseLong(data[1]);
+					long stopId = Long.parseLong(data[2]);
+					long odometer = Long.parseLong(data[3]);
+					double longitude = Long.parseLong(data[4]);
+					double latitude = Long.parseLong(data[5]);
+					long taskId = Long.parseLong(data[6]);
+					long tripId = Long.parseLong(data[8]);
+
+					if (longitude!=-1 && latitude!=-1) {
+						Datagram datagram = new Datagram(datagramData, busId, stopId, odometer, longitude / 10000000, latitude / 10000000, taskId, lineId, tripId);
+						datagrams.add(datagram);
+					}
+				}
+
+				text = br.readLine();
+			}
+
+			br.close();
+		} catch (Exception e) {
+			e.printStackTrace();
+		}
+		return datagrams;
 	}
 	
 	public static ArrayList<SITMLineStop> findAllLineStopByPlanVersion(long planVersionId) {
