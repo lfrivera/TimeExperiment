@@ -45,17 +45,32 @@ public class Main {
 	
 	public static boolean isInSameStop(Datagram datagram, SITMStop stop) {
 
-		double longitudeNum = datagram.getLongitude();
-		double latitudeNum = datagram.getLatitude();
-
-		boolean lng = (latitudeNum <= (stop.getDecimalLatitude() + 0.0006)) && (latitudeNum >= (stop.getDecimalLatitude() - 0.0006));
-		boolean ltd = (longitudeNum <= (stop.getDecimalLongitude() + 0.0006)) && (longitudeNum >= (stop.getDecimalLongitude() - 0.0006));
-
-		if (lng && ltd) {
-			return true;
-		} else {
-			return false;
-		}
+//		double longitudeNum = datagram.getLongitude();
+//		double latitudeNum = datagram.getLatitude();
+//
+//		boolean lng = (latitudeNum <= (stop.getDecimalLatitude() + 0.0006)) && (latitudeNum >= (stop.getDecimalLatitude() - 0.0006));
+//		boolean ltd = (longitudeNum <= (stop.getDecimalLongitude() + 0.0006)) && (longitudeNum >= (stop.getDecimalLongitude() - 0.0006));
+//
+//		if (lng && ltd) {
+//			return true;
+//		} else {
+//			return false;
+//		}
+		
+		double lat1 = stop.getDecimalLatitude();
+		double lng1 = stop.getDecimalLongitude();
+		double lat2 = datagram.getLatitude();
+		double lng2 = datagram.getLongitude();
+		
+		double earthRadius = 3958.75;
+	    double dLat = Math.toRadians(lat2-lat1);
+	    double dLng = Math.toRadians(lng2-lng1);
+	    double a = Math.sin(dLat/2) * Math.sin(dLat/2) + Math.cos(Math.toRadians(lat1)) * Math.cos(Math.toRadians(lat2)) * Math.sin(dLng/2) * Math.sin(dLng/2);
+	    double c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
+	    
+//	    System.out.println(dLat+" "+dLng+" "+c+" "+(earthRadius * c));
+//	    return   (earthRadius * c) <= 0.0006 ?true :false;
+	    return   c <= 0.000015 ?true :false;
 	}
 
 	public static HashMap<Long, ArrayList<Long[]>> readDatagrams(long lineId) throws ParseException {
