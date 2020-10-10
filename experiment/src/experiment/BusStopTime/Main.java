@@ -14,12 +14,35 @@ public class Main {
 
 	public final static String DATAGRAMS_PATH = "data/datagrams.csv";
 	public final static String LINESTOPS_PATH = "data/linestops.csv";
+	
+	public static DateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd hh:mm:ss");
+	public static ArrayList<SITMStop> stopsQuery;
+	public static HashMap<Long, SITMStop> stops;
+	public static HashMap<Long, ArrayList<Datagram>> stopsBuses;
+	public static HashMap<Long, ArrayList<Long[]>> stopsTimes;
 
 	public static void main(String[] args) throws ParseException {
+		init(131);
 		HashMap<Long, ArrayList<Long[]>> stopsTimes = readDatagrams(131);
 		excessWaitingTime(stopsTimes);
 	}
 
+	public static void init(long lineId) {
+
+		stopsQuery = DataSource.findAllStopsByLine(261, lineId);
+		stops = new HashMap<>();
+		stopsBuses = new HashMap<>();
+		stopsTimes = new HashMap<>();
+
+		for (int i = 0; i < stopsQuery.size(); i++) {
+			if (!stops.containsKey(stopsQuery.get(i).getStopId())) {
+				stops.put(stopsQuery.get(i).getStopId(), stopsQuery.get(i));
+				stopsBuses.put(stopsQuery.get(i).getStopId(), new ArrayList<Datagram>());
+				stopsTimes.put(stopsQuery.get(i).getStopId(), new ArrayList<Long[]>());
+			}
+		}
+	}
+	
 	public static boolean isInSameStop(Datagram datagram, SITMStop stop) {
 
 		double longitudeNum = datagram.getLongitude();
@@ -37,20 +60,6 @@ public class Main {
 
 	public static HashMap<Long, ArrayList<Long[]>> readDatagrams(long lineId) throws ParseException {
 
-		DateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd hh:mm:ss");
-		ArrayList<SITMStop> stopsQuery = DataSource.findAllStopsByLine(261, lineId);
-		HashMap<Long, SITMStop> stops = new HashMap<>();
-		HashMap<Long, ArrayList<Datagram>> stopsBuses = new HashMap<>();
-		HashMap<Long, ArrayList<Long[]>> stopsTimes = new HashMap<>();
-
-		for (int i = 0; i < stopsQuery.size(); i++) {
-			if (!stops.containsKey(stopsQuery.get(i).getStopId())) {
-				stops.put(stopsQuery.get(i).getStopId(), stopsQuery.get(i));
-				stopsBuses.put(stopsQuery.get(i).getStopId(), new ArrayList<Datagram>());
-				stopsTimes.put(stopsQuery.get(i).getStopId(), new ArrayList<Long[]>());
-			}
-		}
-
 		
 		ArrayList<Datagram> datagrams = DataSource.findAllDatagrams(lineId);
 		
@@ -60,58 +69,63 @@ public class Main {
 			long stopId = datagram.getStopId();
 			
 			if (stopsBuses.containsKey(stopId)) {
-				
-				ArrayList<Datagram> buses = stopsBuses.get(stopId);
-				SITMStop stop = stops.get(stopId);
-				
-				boolean isin = false;
-				int datagramIndex = -1;
-
-				for (int i = 0; i < buses.size(); i++) {
-					if (buses.get(i).getBusId() == datagram.getBusId()) {
-						isin = true;
-						datagramIndex = i;
-						i = buses.size();
-					}
-				}
-
-				boolean x = isInSameStop(datagram, stop);
-
-				if (x) { // inside polygon
-					
-					if(stopId==502300)
-						System.out.println("entra "+datagram.getBusId()+" "+datagram.getDatagramDate());
-					
-					if (!isin) {			
-						stopsBuses.get(stopId).add(datagram);
-						Long[] times = new Long[3];
-						times[1] = dateFormat.parse(datagram.getDatagramDate()).getTime()/1000;
-						stopsTimes.get(stopId).add(times);
-					}
-					
-				} else if (!x && isin) { // outside polygon
-					
-					buses.remove(datagramIndex);
-					
-					if(stopId==502300)
-						System.out.println("=====>sale "+datagram.getBusId()+" "+datagram.getDatagramDate());
-					
-					if(buses.isEmpty()) {
-						
-						int lastPosition = stopsTimes.get(stopId).size()-1;
-						Long[] times = stopsTimes.get(stopId).get(lastPosition);
-						times[0] = datagram.getBusId();
-						times[2] = dateFormat.parse(datagram.getDatagramDate()).getTime()/1000;
-						
-						if(stopId==502300)
-							System.out.println("==============> vacio "+datagram.getBusId()+"-"+datagram.getDatagramDate());
-					}
-						
-				}
+				analysisPerBus(datagram);
 			}
 		}
 
 		return stopsTimes;
+	}
+	
+	public static void analysisPerBus(Datagram datagram) throws ParseException {
+		
+		long stopId = datagram.getStopId();
+		ArrayList<Datagram> buses = stopsBuses.get(stopId);
+		SITMStop stop = stops.get(stopId);
+		
+		boolean isin = false;
+		int datagramIndex = -1;
+
+		for (int i = 0; i < buses.size(); i++) {
+			if (buses.get(i).getBusId() == datagram.getBusId()) {
+				isin = true;
+				datagramIndex = i;
+				i = buses.size();
+			}
+		}
+
+		boolean x = isInSameStop(datagram, stop);
+
+		if (x) { // inside polygon
+			
+			if(stopId==502300)
+				System.out.println("entra "+datagram.getBusId()+" "+datagram.getDatagramDate());
+			
+			if (!isin) {			
+				stopsBuses.get(stopId).add(datagram);
+				Long[] times = new Long[3];
+				times[1] = dateFormat.parse(datagram.getDatagramDate()).getTime()/1000;
+				stopsTimes.get(stopId).add(times);
+			}
+			
+		} else if (!x && isin) { // outside polygon
+			
+			buses.remove(datagramIndex);
+			
+			if(stopId==502300)
+				System.out.println("=====>sale "+datagram.getBusId()+" "+datagram.getDatagramDate());
+			
+			if(buses.isEmpty()) {
+				
+				int lastPosition = stopsTimes.get(stopId).size()-1;
+				Long[] times = stopsTimes.get(stopId).get(lastPosition);
+				times[0] = datagram.getBusId();
+				times[2] = dateFormat.parse(datagram.getDatagramDate()).getTime()/1000;
+				
+				if(stopId==502300)
+					System.out.println("==============> vacio "+datagram.getBusId()+"-"+datagram.getDatagramDate());
+			}
+				
+		}
 	}
 	
 	public static void excessWaitingTime(HashMap<Long, ArrayList<Long[]>> stopsTimes) {
