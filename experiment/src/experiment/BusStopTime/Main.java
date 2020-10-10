@@ -7,6 +7,7 @@ import java.text.DateFormat;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.Map;
 
 import experiment.model.Datagram;
 import experiment.model.SITMStop;
@@ -26,8 +27,8 @@ public class Main {
 		double longitudeNum = datagram.getLongitude() / 10000000;
 		double latitudeNum = datagram.getLatitude() / 10000000;
 
-		boolean lng = (latitudeNum <= (stop.getDecimalLatitude() + 0.0005)) && (latitudeNum >= (stop.getDecimalLatitude() - 0.0005));
-		boolean ltd = (longitudeNum <= (stop.getDecimalLongitude() + 0.0005)) && (longitudeNum >= (stop.getDecimalLongitude() - 0.0005));
+		boolean lng = (latitudeNum <= (stop.getDecimalLatitude() + 0.0006)) && (latitudeNum >= (stop.getDecimalLatitude() - 0.0006));
+		boolean ltd = (longitudeNum <= (stop.getDecimalLongitude() + 0.0006)) && (longitudeNum >= (stop.getDecimalLongitude() - 0.0006));
 
 		if (lng && ltd) {
 			return true;
@@ -80,7 +81,7 @@ public class Main {
 
 					Datagram datagram = new Datagram(datagramData, busId, stopId, odometer, longitude, latitude, taskId, lineId, tripId);
 
-					if (stopsBuses.containsKey(stopId)) {
+					if (stopsBuses.containsKey(stopId) && longitude!=-1 && latitude!=-1) {
 
 						ArrayList<Datagram> buses = stopsBuses.get(stopId);
 						SITMStop stop = stops.get(stopId);
@@ -100,7 +101,10 @@ public class Main {
 
 						if (x) { // inside polygon
 							
-							if (!isin && busId != 308) {
+							if(stopId==502300)
+								System.out.println("entra "+datagram.getBusId()+" "+datagram.getDatagramData());
+							
+							if (!isin) {			
 								stopsBuses.get(stopId).add(datagram);
 								Long[] times = new Long[3];
 								times[1] = dateFormat.parse(datagramData).getTime()/1000;
@@ -111,6 +115,9 @@ public class Main {
 							
 							buses.remove(datagramIndex);
 							
+							if(stopId==502300)
+								System.err.println("sale "+datagram.getBusId()+" "+datagram.getDatagramData());
+							
 							if(buses.isEmpty()) {
 								
 								int lastPosition = stopsTimes.get(stopId).size()-1;
@@ -120,10 +127,10 @@ public class Main {
 								times[2] = dateFormat.parse(datagram.getDatagramData()).getTime()/1000;
 //								stopsTimes.get(stopId).add(lastPosition,times);
 								
-//								if(stopId==502300)
-//									System.err.println("vacio "+times[0]+"-"+times[2]);
+								if(stopId==502300)
+									System.err.println("-------> vacio "+datagram.getBusId()+"-"+datagram.getDatagramData());
 							}
-							
+								
 						}
 
 					}
@@ -141,17 +148,17 @@ public class Main {
 	}
 	
 	public static void excessWaitingTime(HashMap<Long, ArrayList<Long[]>> stopsTimes) {
-		ArrayList<SITMStop> stops = DataSource.findAllStopsByLine(261, 131);
 		
-		for (int i = 0; i < stops.size(); i++) {
+		for (Map.Entry<Long, ArrayList<Long[]>> entry : stopsTimes.entrySet()) {
 
 			long initialTime = 0;
 			long lastTime = 0;
 			
-			if(stopsTimes.containsKey(stops.get(i).getStopId())) {
-				System.out.println("================> "+ stops.get(i).getStopId() + " " +stops.get(i).getLongName());
+//			if( entry.getKey() == 502300) {
+				
+				System.out.println("----------> waitingTime " + entry.getKey());
 
-				for (Long[] data : stopsTimes.get(stops.get(i).getStopId())) {
+				for (Long[] data : entry.getValue()) {
 
 					if(data[1]!=null && data[2]!=null) {
 //						System.out.println(data[0]+" "+data[1]+"->"+data[2]);
@@ -159,11 +166,13 @@ public class Main {
 							initialTime = data[1];
 							lastTime = data[2];
 						}else {
+							
 							if(data[1] >= initialTime && data[1] <= lastTime) {
 								lastTime = data[2];
 							}else if(data[1] > lastTime){
 								long waitingTime = (data[1]-lastTime);
-								System.out.println(data[0]+": "+waitingTime);
+//								System.out.println(data[0]+": "+waitingTime);
+								System.out.println(waitingTime);
 								initialTime = data[1];
 								lastTime = data[2];
 							}
@@ -171,7 +180,7 @@ public class Main {
 					}
 						
 				}
-			}
+//			}
 		}
 	}
 }
