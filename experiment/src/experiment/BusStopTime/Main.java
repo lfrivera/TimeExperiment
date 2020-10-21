@@ -13,15 +13,13 @@ import experiment.model.SITMStop;
 public class Main {
 
 	public final static String DATAGRAMS_PATH = "data/datagrams.csv";
-	public final static String LINESTOPS_PATH = "data/linestops.csv";
-
 	public static DateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd hh:mm:ss");
-	public static ArrayList<SITMStop> stopsQuery;
-	public static HashMap<Long, SITMStop> stops;
-	public static HashMap<Long, ArrayList<Datagram>> stopsBuses;
+	
+	public static HashMap<Long, SITMStop> stops; //HashMap with the stops
+	public static HashMap<Long, ArrayList<Datagram>> stopsBuses; // HashMap with the array of buses in one stop
 
-	public static HashMap<Long, ArrayList<Long[]>> stopsWaitingTimes;
-	public static HashMap<Long, ArrayList<Long[]>> busesWaitingTimes;
+	public static HashMap<Long, ArrayList<Long[]>> stopsWaitingTimes; // Excess Waiting Time at Bus stop
+	public static HashMap<Long, ArrayList<Long[]>> busesWaitingTimes; // Bus Stop Time 
 
 	public static void main(String[] args) throws ParseException {
 		init(131);
@@ -29,9 +27,12 @@ public class Main {
 		excessWaitingTime();
 	}
 
+	/*
+	 * This method initialize the hash maps with the necessaries stop ids and arrays
+	 */
 	public static void init(long lineId) {
 
-		stopsQuery = DataSource.findAllStopsByLine(261, lineId);
+		ArrayList<SITMStop> stopsQuery = DataSource.findAllStopsByLine(261, lineId);
 		stops = new HashMap<>();
 		stopsBuses = new HashMap<>();
 
@@ -49,6 +50,9 @@ public class Main {
 		}
 	}
 
+	/*
+	 * This method evaluates that the bus is inside the area of ​​the stop or station
+	 */
 	public static boolean isInTheStop(Datagram datagram, SITMStop stop) {
 
 		double lat1 = stop.getDecimalLatitude();
@@ -63,7 +67,10 @@ public class Main {
 
 		return c <= 0.00003 ? true : false;
 	}
-
+	
+	/*
+	 * This method read the datagrams file
+	 */
 	public static void readDatagrams(long lineId) throws ParseException {
 
 		ArrayList<Datagram> datagrams = DataSource.findAllDatagrams(lineId);
@@ -80,18 +87,22 @@ public class Main {
 		
 	}
 
+	
+	/*
+	 * This method analyze one datagram
+	 */
 	public static void analysisPerBus(Datagram datagram) throws ParseException {
 
 		long stopId = datagram.getStopId();
 		ArrayList<Datagram> buses = stopsBuses.get(stopId);
 		SITMStop stop = stops.get(stopId);
 
-		boolean isin = false;
+		boolean isInStation = false;
 		int datagramIndex = -1;
 
 		for (int i = 0; i < buses.size(); i++) {
 			if (buses.get(i).getBusId() == datagram.getBusId()) {
-				isin = true;
+				isInStation = true;
 				datagramIndex = i;
 				i = buses.size();
 			}
@@ -102,21 +113,23 @@ public class Main {
 		
 		if (x) {// the bus is inside the polygon
 
-//			if(stopId==502300)
-//				System.out.println("inside "+datagram.getBusId()+" "+datagram.getDatagramDate());
+			if(stopId==502300)
+				System.out.println("inside "+datagram.getBusId()+" "+datagram.getDatagramDate());
 
-			if (!isin) {
+			if (!isInStation) { // The bus arrive the stop
 				stopsBuses.get(stopId).add(datagram);
 				Long[] times = new Long[3];
 				times[1] = dateFormat.parse(datagram.getDatagramDate()).getTime() / 1000;
 				stopsWaitingTimes.get(stopId).add(times);
 			}
-		} else if (!x && isin) {// the bus is outside the polygon
+			
+		} else if (!x && isInStation) { // The bus is outside the polygon
 
-//			if(stopId==502300)
-//				System.out.println("=====> outside "+datagram.getBusId()+" "+datagram.getDatagramDate());
-
-			if (!buses.isEmpty()) {
+			if (!buses.isEmpty()) { // The stop isn't empty
+				
+				if(stopId==502300)
+					System.out.println("=====> outside "+datagram.getBusId()+" "+datagram.getDatagramDate());
+				
 				Long[] times = new Long[3];
 				times[0] = datagram.getBusId();
 				times[1] = dateFormat.parse(buses.get(datagramIndex).getDatagramDate()).getTime()/ 1000;
@@ -126,10 +139,10 @@ public class Main {
 
 			buses.remove(datagramIndex);
 
-			if (buses.isEmpty()) {
+			if (buses.isEmpty()) {// The stop is empty
 
-//				if(stopId==502300)
-//					System.out.println("==============> Empty stop "+datagram.getBusId()+"-"+datagram.getDatagramDate());
+				if(stopId==502300)
+					System.out.println("==============> Empty stop "+datagram.getBusId()+"-"+datagram.getDatagramDate());
 
 				int lastPosition = stopsWaitingTimes.get(stopId).size() - 1;
 				Long[] times = stopsWaitingTimes.get(stopId).get(lastPosition);
@@ -140,8 +153,13 @@ public class Main {
 		}
 	}
 
+	/*
+	 * Post analysis, print the results in console 
+	 */
 	public static void excessWaitingTime() {
 
+		// Excess Waiting Time at Bus stop results
+		
 		for (Map.Entry<Long, ArrayList<Long[]>> entry : busesWaitingTimes.entrySet()) {
 
 			System.out.println("WaitingTime " + entry.getKey());
@@ -149,13 +167,16 @@ public class Main {
 			for (Long[] data : entry.getValue()) {
 
 				if (data[1] != null && data[2] != null) {
-					System.out.println(data[0]+": "+data[1]+"-->"+data[2]);
+					long time = data[2]-data[1];
+					System.out.println(data[0]+": "+time);
 				}
 			}
 			System.out.println();
 		}
 		
 		System.out.println("---------------------------------------------------------------------------------");
+		
+		// Bus Stop Time results
 		
 		for (Map.Entry<Long, ArrayList<Long[]>> entry : stopsWaitingTimes.entrySet()) {
 
