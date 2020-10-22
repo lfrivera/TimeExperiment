@@ -2,6 +2,7 @@ package experiment.model;
 
 public class Datagram {
 	
+	private long datagramDateTime;
 	private String datagramDate;
 	private long busId;
 	private long stopId;
@@ -12,7 +13,8 @@ public class Datagram {
 	private long lineId;
 	private long tripId;
 	
-	public Datagram(String datagramDate, long busId, long stopId, long odometer, double longitude, double latitude, long taskId, long lineId, long tripId) {
+	public Datagram(long datagramDateTime, String datagramDate, long busId, long stopId, long odometer, double longitude, double latitude, long taskId, long lineId, long tripId) {
+		this.datagramDateTime = datagramDateTime;
 		this.datagramDate = datagramDate;
 		this.busId = busId;
 		this.stopId = stopId;
@@ -24,15 +26,20 @@ public class Datagram {
 		this.tripId = tripId;
 	}
 	
-	
 	@Override
 	public String toString() {
-		return "Datagram [datagramData=" + datagramDate + ", busId=" + busId + ", stopId=" + stopId + ", odometer="
-				+ odometer + ", longitude=" + longitude + ", latitude=" + latitude + ", taskId=" + taskId + ", lineId="
-				+ lineId + ", tripId=" + tripId + "]";
+		return "Datagram [datagramDate=" + datagramDate + ", datagramDateTime=" + datagramDateTime + ", busId=" + busId
+				+ ", stopId=" + stopId + ", odometer=" + odometer + ", longitude=" + longitude + ", latitude="
+				+ latitude + ", taskId=" + taskId + ", lineId=" + lineId + ", tripId=" + tripId + "]";
+	}
+	
+	public long getDatagramDateTime() {
+		return datagramDateTime;
 	}
 
-
+	public void setDatagramDateTime(long datagramDateTime) {
+		this.datagramDateTime = datagramDateTime;
+	}
 
 	public String getDatagramDate() {
 		return datagramDate;

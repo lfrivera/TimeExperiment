@@ -1,8 +1,6 @@
 package experiment.BusStopTime;
 
-import java.text.DateFormat;
 import java.text.ParseException;
-import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Map;
@@ -13,7 +11,6 @@ import experiment.model.SITMStop;
 public class Main {
 
 	public final static String DATAGRAMS_PATH = "data/datagrams.csv";
-	public static DateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd hh:mm:ss");
 	
 	public static HashMap<Long, SITMStop> stops; //HashMap with the stops
 	public static HashMap<Long, ArrayList<Datagram>> stopsBuses; // HashMap with the array of buses in one stop
@@ -86,7 +83,6 @@ public class Main {
 		}
 		
 	}
-
 	
 	/*
 	 * This method analyze one datagram
@@ -119,7 +115,7 @@ public class Main {
 			if (!isInStation) { // The bus arrive the stop
 				stopsBuses.get(stopId).add(datagram);
 				Long[] times = new Long[3];
-				times[1] = dateFormat.parse(datagram.getDatagramDate()).getTime() / 1000;
+				times[1] = datagram.getDatagramDateTime();
 				stopsWaitingTimes.get(stopId).add(times);
 			}
 			
@@ -132,8 +128,8 @@ public class Main {
 				
 				Long[] times = new Long[3];
 				times[0] = datagram.getBusId();
-				times[1] = dateFormat.parse(buses.get(datagramIndex).getDatagramDate()).getTime()/ 1000;
-				times[2] = dateFormat.parse(datagram.getDatagramDate()).getTime() / 1000;
+				times[1] = buses.get(datagramIndex).getDatagramDateTime();
+				times[2] = datagram.getDatagramDateTime();
 				busesWaitingTimes.get(stopId).add(times);
 			}
 
@@ -147,7 +143,7 @@ public class Main {
 				int lastPosition = stopsWaitingTimes.get(stopId).size() - 1;
 				Long[] times = stopsWaitingTimes.get(stopId).get(lastPosition);
 				times[0] = datagram.getBusId();
-				times[2] = dateFormat.parse(datagram.getDatagramDate()).getTime() / 1000;
+				times[2] = datagram.getDatagramDateTime();
 			}
 
 		}

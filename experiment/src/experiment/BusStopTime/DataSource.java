@@ -17,6 +17,7 @@ public class DataSource {
 
 	public final static String DATAGRAMS_PATH = "data/datagrams.csv";
 	public final static String LINESTOPS_PATH = "data/linestops.csv";
+	public static DateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd hh:mm:ss");
 	
 	public static File getSourceFile(String path) {
 		return new File(path);
@@ -42,6 +43,7 @@ public class DataSource {
 				if (data[7].equals(lineId + "")) {
 
 					String datagramData = data[0];
+					long datagramDateTime = dateFormat.parse(datagramData).getTime() / 1000;
 					long busId = Long.parseLong(data[1]);
 					long stopId = Long.parseLong(data[2]);
 					long odometer = Long.parseLong(data[3]);
@@ -51,7 +53,7 @@ public class DataSource {
 					long tripId = Long.parseLong(data[8]);
 
 					if (longitude!=-1 && latitude!=-1) {
-						Datagram datagram = new Datagram(datagramData, busId, stopId, odometer, longitude / 10000000, latitude / 10000000, taskId, lineId, tripId);
+						Datagram datagram = new Datagram(datagramDateTime, datagramData, busId, stopId, odometer, longitude / 10000000, latitude / 10000000, taskId, lineId, tripId);
 						datagrams.add(datagram);
 					}
 				}
