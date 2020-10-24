@@ -9,8 +9,6 @@ import experiment.model.Datagram;
 import experiment.model.SITMStop;
 
 public class Main {
-
-	public final static String DATAGRAMS_PATH = "data/datagrams.csv";
 	
 	public static HashMap<Long, SITMStop> stops; //HashMap with the stops
 	public static HashMap<Long, ArrayList<Datagram>> stopsBuses; // HashMap with the array of buses in one stop
@@ -70,7 +68,7 @@ public class Main {
 	 */
 	public static void readDatagrams(long lineId) throws ParseException {
 
-		ArrayList<Datagram> datagrams = DataSource.findAllDatagrams(lineId);
+		ArrayList<Datagram> datagrams = DataSource.readDatagrams2(lineId);
 
 		for (int n = 0; n < datagrams.size(); n++) {
 

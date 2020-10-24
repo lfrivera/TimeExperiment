@@ -16,15 +16,16 @@ import experiment.model.SITMStop;
 public class DataSource {
 
 	public final static String DATAGRAMS_PATH = "data/datagrams.csv";
+	public final static String APRIL_PATH = "data/30-APR-19-sorted.csv";
 	public final static String LINESTOPS_PATH = "data/linestops.csv";
-	public static DateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd hh:mm:ss");
-	
+
 	public static File getSourceFile(String path) {
 		return new File(path);
 	}
-	
-	public static ArrayList<Datagram> findAllDatagrams(long lineId){
-		
+
+	public static ArrayList<Datagram> readDatagrams1(long lineId) {
+
+		DateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd hh:mm:ss");
 		File sourceFile = DataSource.getSourceFile(DATAGRAMS_PATH);
 		ArrayList<Datagram> datagrams = new ArrayList<>();
 		BufferedReader br;
@@ -52,8 +53,9 @@ public class DataSource {
 					long taskId = Long.parseLong(data[6]);
 					long tripId = Long.parseLong(data[8]);
 
-					if (longitude!=-1 && latitude!=-1) {
-						Datagram datagram = new Datagram(datagramDateTime, datagramData, busId, stopId, odometer, longitude / 10000000, latitude / 10000000, taskId, lineId, tripId);
+					if (longitude != -1 && latitude != -1) {
+						Datagram datagram = new Datagram(datagramDateTime, datagramData, busId, stopId, odometer,
+								longitude / 10000000, latitude / 10000000, taskId, lineId, tripId);
 						datagrams.add(datagram);
 					}
 				}
@@ -67,7 +69,56 @@ public class DataSource {
 		}
 		return datagrams;
 	}
-	
+
+	public static ArrayList<Datagram> readDatagrams2(long lineId) {
+
+		DateFormat dateFormat = new SimpleDateFormat("dd-MM-yy HH.mm.ss");
+		File sourceFile = DataSource.getSourceFile(APRIL_PATH);
+		ArrayList<Datagram> datagrams = new ArrayList<>();
+		BufferedReader br;
+		String text = "";
+
+		try {
+
+			br = new BufferedReader(new FileReader(sourceFile));
+			text = br.readLine();
+			text = br.readLine();
+
+			while (text != null && !text.equals("")) {
+
+				String[] data = text.split(",");
+
+				if (data.length > 1 && data[7].equals(lineId + "")) {
+
+					String datagramData = data[10];
+					datagramData = datagramData.substring(0, 3) + "04" + datagramData.substring(6, 18)
+							+ datagramData.substring(25, 28);
+					long datagramDateTime = dateFormat.parse(datagramData).getTime() / 1000;
+					long busId = Long.parseLong(data[11]);
+					long stopId = Long.parseLong(data[2]);
+					long odometer = Long.parseLong(data[3]);
+					double longitude = Long.parseLong(data[5]);
+					double latitude = Long.parseLong(data[4]);
+					long taskId = Long.parseLong(data[6]);
+					long tripId = Long.parseLong(data[8]);
+
+					if (longitude != -1 && latitude != -1) {
+						Datagram datagram = new Datagram(datagramDateTime, datagramData, busId, stopId, odometer, longitude / 10000000, latitude / 10000000, taskId, lineId, tripId);
+						datagrams.add(datagram);
+					}
+				}
+
+				text = br.readLine();
+			}
+
+			br.close();
+		} catch (Exception e) {
+			System.out.println(text);
+			e.printStackTrace();
+		}
+		return datagrams;
+	}
+
 	public static ArrayList<SITMLineStop> findAllLineStopByPlanVersion(long planVersionId) {
 
 		String path = new File("data/linestops.csv").getAbsolutePath();
@@ -84,7 +135,7 @@ public class DataSource {
 				columns = line.split(";");
 
 				if (!columns[0].isEmpty() && columns[5].equals(planVersionId + "")) {
-					
+
 					long lineStopid = Long.parseLong(columns[0]);
 					long stopsequence = Long.parseLong(columns[1]);
 					long orientation = Long.parseLong(columns[2]);
@@ -95,20 +146,21 @@ public class DataSource {
 					DateFormat dateFormat = new SimpleDateFormat("dd-MMM-yy", Locale.US);
 					Date registerDate = new Date(dateFormat.parse(columns[7]).getTime());
 					long lineVariantType = Long.parseLong(columns[8]);
-					
-					lineStops.add(new SITMLineStop(lineStopid, stopsequence, orientation, lineid, stopid,planVersionid, lineVariant, registerDate, lineVariantType));
+
+					lineStops.add(new SITMLineStop(lineStopid, stopsequence, orientation, lineid, stopid, planVersionid,
+							lineVariant, registerDate, lineVariantType));
 				}
-				
+
 				line = br.readLine();
 			}
-			
+
 			br.close();
 		} catch (Exception e) {
 			e.printStackTrace();
 		}
 		return lineStops;
 	}
-	
+
 	public static ArrayList<SITMStop> findAllStopsByPlanVersion(long planVersionId) {
 
 		ArrayList<SITMStop> stops = new ArrayList<>();
@@ -125,9 +177,8 @@ public class DataSource {
 			while (line != null) {
 				columns = line.split(";");
 
-				if (!columns[0].isEmpty() && columns[1].equals(planVersionId + "")
-						&& !columns[6].contains("#") && !columns[6].equals("0")
-						&& !columns[7].contains("#") && !columns[7].equals("0")) {
+				if (!columns[0].isEmpty() && columns[1].equals(planVersionId + "") && !columns[6].contains("#")
+						&& !columns[6].equals("0") && !columns[7].contains("#") && !columns[7].equals("0")) {
 
 					String longName = columns[3];
 					String shortName = columns[2];
@@ -157,7 +208,8 @@ public class DataSource {
 						decimalLactitude = Double.parseDouble(str.toString());
 					}
 
-					stops.add(new SITMStop(stopId, shortName, longName, gPSX, gPSY, decimalLongitude,decimalLactitude, planVersionId));
+					stops.add(new SITMStop(stopId, shortName, longName, gPSX, gPSY, decimalLongitude, decimalLactitude,
+							planVersionId));
 				}
 
 				line = br.readLine();
@@ -169,7 +221,7 @@ public class DataSource {
 
 		return stops;
 	}
-	
+
 	public static ArrayList<SITMStop> findAllStopsByLine(long planVersionId, long lineId) {
 
 		ArrayList<SITMStop> stopsByLine = new ArrayList<>();
