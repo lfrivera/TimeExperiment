@@ -90,9 +90,7 @@ public class DataSource {
 
 				if (data.length > 1 && data[7].equals(lineId + "")) {
 
-					String datagramData = data[10];
-					datagramData = datagramData.substring(0, 3) + "04" + datagramData.substring(6, 18)
-							+ datagramData.substring(25, 28);
+					String datagramData = changeFormat(data[10]);
 					long datagramDateTime = dateFormat.parse(datagramData).getTime() / 1000;
 					long busId = Long.parseLong(data[11]);
 					long stopId = Long.parseLong(data[2]);
@@ -119,6 +117,20 @@ public class DataSource {
 		return datagrams;
 	}
 
+	public static String changeFormat(String date) {
+		String day = date.substring(0, 3) + "04" + date.substring(6, 9);
+		String hour = date.substring(10, 12);
+		String minSec = date.substring(12, 18);
+		String meridians = date.substring(26, 28);
+		
+		if(meridians.equals("PM")) {
+			int hourNumber = Integer.parseInt(hour);
+			hourNumber += 12;
+			hour = hourNumber+"";
+		}
+		return day+" "+hour+minSec;
+	}
+	
 	public static ArrayList<SITMLineStop> findAllLineStopByPlanVersion(long planVersionId) {
 
 		String path = new File("data/linestops.csv").getAbsolutePath();

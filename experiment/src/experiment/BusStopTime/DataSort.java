@@ -43,7 +43,6 @@ public class DataSort {
 				if(data.length>1) {
 					datagrams.add(text);
 				}
-				
 				text = br.readLine();
 			}
 
@@ -76,9 +75,10 @@ public class DataSort {
 				String data2 = o2.split(",")[10];
 
 				try {
-					data1 = data1.substring(0, 3) + "04" + data1.substring(6, 18) + data1.substring(25, 28);
+					data1 = changeFormat(data1);
 					Long date_1 = dateFormat.parse(data1).getTime() / 1000;
-					data2 = data2.substring(0, 3) + "04" + data2.substring(6, 18) + data2.substring(25, 28);
+					
+					data2 = changeFormat(data2);
 					Long date_2 = dateFormat.parse(data2).getTime() / 1000;
 
 					return date_1.compareTo(date_2);
@@ -90,5 +90,19 @@ public class DataSort {
 				return 0;
 			}
 		});
+	}
+	
+	public static String changeFormat(String date) {
+		String day = date.substring(0, 3) + "04" + date.substring(6, 9);
+		String hour = date.substring(10, 12);
+		String minSec = date.substring(12, 18);
+		String meridians = date.substring(26, 28);
+		
+		if(meridians.equals("PM")) {
+			int hourNumber = Integer.parseInt(hour);
+			hourNumber += 12;
+			hour = hourNumber+"";
+		}
+		return day+" "+hour+minSec;
 	}
 }
