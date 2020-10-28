@@ -123,7 +123,7 @@ public class DataSource {
 		String minSec = date.substring(12, 18);
 		String meridians = date.substring(26, 28);
 		
-		if(meridians.equals("PM")) {
+		if(meridians.equals("PM") && !hour.equals("12")) {
 			int hourNumber = Integer.parseInt(hour);
 			hourNumber += 12;
 			hour = hourNumber+"";
