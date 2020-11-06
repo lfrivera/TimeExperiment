@@ -2,7 +2,6 @@ package experiment.BusStopTime;
 
 import java.text.ParseException;
 import java.util.ArrayList;
-import java.util.Date;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -16,13 +15,11 @@ public class Main {
 
 	public static HashMap<Long, ArrayList<Long[]>> stopsWaitingTimes; // Excess Waiting Time at Bus stop
 	public static HashMap<Long, ArrayList<Long[]>> busesWaitingTimes; // Bus Stop Time 
-	public static HashMap<Long, ArrayList<Long>> arrivalTime; // Bus Stop Time 
 
 	public static void main(String[] args) throws ParseException {
 		init(131);
 		readDatagrams(131);
-		//arrivalTime();
-		excessWaitingTime();
+		postAnalysis();
 	}
 
 	/*
@@ -36,7 +33,6 @@ public class Main {
 
 		stopsWaitingTimes = new HashMap<>();
 		busesWaitingTimes = new HashMap<>();
-		arrivalTime = new HashMap<>();
 
 		for (int i = 0; i < stopsQuery.size(); i++) {
 			if (!stops.containsKey(stopsQuery.get(i).getStopId())) {
@@ -45,7 +41,6 @@ public class Main {
 
 				stopsWaitingTimes.put(stopsQuery.get(i).getStopId(), new ArrayList<Long[]>());
 				busesWaitingTimes.put(stopsQuery.get(i).getStopId(), new ArrayList<Long[]>());
-				arrivalTime.put(stopsQuery.get(i).getStopId(), new ArrayList<Long>());
 			}
 		}
 	}
@@ -113,14 +108,13 @@ public class Main {
 		if (x) {// the bus is inside the polygon
 
 			if(stopId==502300)
-				System.out.println("inside "+datagram.getBusId()+" | "+datagram.getDatagramDate()+" | "+datagram.getLatitude()+","+datagram.getLongitude());
+				System.out.println("inside "+datagram.getBusId()+" | "+datagram.getDatagramDate()+" | "+datagram.getOdometer()+" | "+datagram.getLatitude()+","+datagram.getLongitude());
 
 			if (!isInStation) { // The bus arrive the stop
 				stopsBuses.get(stopId).add(datagram);
 				Long[] times = new Long[3];
 				times[1] = datagram.getDatagramDateTime();
 				stopsWaitingTimes.get(stopId).add(times);
-				//arrivalTime.get(stopId).add(datagram.getDatagramDateTime());
 				
 			}
 			
@@ -129,12 +123,13 @@ public class Main {
 			if (!buses.isEmpty()) { // The stop isn't empty
 				
 				if(stopId==502300)
-					System.out.println("=====> outside "+datagram.getBusId()+" | "+datagram.getDatagramDate()+" | "+datagram.getLatitude()+","+datagram.getLongitude());
+					System.out.println("=====> outside "+datagram.getBusId()+" | "+datagram.getDatagramDate()+" | "+datagram.getOdometer()+" | "+datagram.getLatitude()+","+datagram.getLongitude());
 				
-				Long[] times = new Long[3];
-				times[0] = datagram.getBusId();
-				times[1] = buses.get(datagramIndex).getDatagramDateTime();
-				times[2] = datagram.getDatagramDateTime();
+				Long[] times = new Long[4];
+				times[0] = datagram.getBusId();//busId
+				times[1] = buses.get(datagramIndex).getDatagramDateTime();//arrivalPolygon
+				times[2] = datagram.getDatagramDateTime();//leavePolygon
+				times[3] = (times[1]+times[2])/2;//Time of arrival, open doors
 				busesWaitingTimes.get(stopId).add(times);
 			}
 
@@ -143,7 +138,7 @@ public class Main {
 			if (buses.isEmpty()) {// The stop is empty
 
 				if(stopId==502300)
-					System.out.println("==============> Empty stop "+datagram.getBusId()+" | "+datagram.getDatagramDate()+" | "+datagram.getLatitude()+","+datagram.getLongitude());
+					System.out.println("==============> Empty stop "+datagram.getBusId()+" | "+datagram.getDatagramDate()+" | "+datagram.getOdometer()+" | "+datagram.getLatitude()+","+datagram.getLongitude());
 
 				int lastPosition = stopsWaitingTimes.get(stopId).size() - 1;
 				Long[] times = stopsWaitingTimes.get(stopId).get(lastPosition);
@@ -152,28 +147,16 @@ public class Main {
 			}
 
 		}
-	}
-
-	@SuppressWarnings("deprecation")
-	public static void arrivalTime() {
-		for (Map.Entry<Long, ArrayList<Long>> entry : arrivalTime.entrySet()) {
-			System.out.println("arrivalTime ==>" + entry.getKey());
-			
-			ArrayList<Long> times = entry.getValue();
-			
-			for (int i = 0; i < times.size()-1; i++) {
-				Date date = new Date(times.get(i)*1000);
-				System.out.println(date.getHours()+":"+date.getMinutes()+","+(times.get(i+1)-times.get(i)));
-			}
-		}
+		
+		System.out.println("---------------------------------------------------------------------------------");
 	}
 	
 	/*
 	 * Post analysis, print the results in console 
 	 */
-	public static void excessWaitingTime() {
+	public static void postAnalysis() {
 
-		// Time inside the polygon
+		// E-1, Ti, E+1
 		for (Map.Entry<Long, ArrayList<Long[]>> entry : busesWaitingTimes.entrySet()) {
 
 			System.out.println("Stop Id " + entry.getKey());
@@ -182,11 +165,10 @@ public class Main {
 
 				if (data[1] != null && data[2] != null) {
 					long time = data[2]-data[1];
-					long mean_value = (data[1]+data[2])/2;
 					//System.out.print("busId "+data[0]);
 					//System.out.print(" arrive: "+data[1]);
 					//System.out.print(" leave: "+data[2]);
-					System.out.print(" Ti: "+mean_value);
+					System.out.print(" Ti: "+data[3]);
 					System.out.println(" timeInside: "+time);
 				}
 			}
@@ -195,8 +177,29 @@ public class Main {
 		
 		System.out.println("---------------------------------------------------------------------------------");
 		
-		// Excess Waiting Time at Bus stop
-		/*
+		// Ai
+		for (Map.Entry<Long, ArrayList<Long[]>> entry : busesWaitingTimes.entrySet()) {
+
+			System.out.println("Stop Id " + entry.getKey());
+
+			for (int i = 0; i < entry.getValue().size()-1; i++) {
+
+				Long[] data = entry.getValue().get(i);
+				Long[] dataNext = entry.getValue().get(i+1);
+				
+				if (data[1] != null && data[2] != null && dataNext[1] != null && dataNext[2] != null) {
+					long Ai = dataNext[3]-data[3];
+					System.out.println(" Ai: "+Ai);
+				}
+			}
+			System.out.println();
+		}
+		
+		System.out.println("---------------------------------------------------------------------------------");
+	}
+	
+	public void excess_Waiting_Time_at_Bus_stop() {
+		
 		for (Map.Entry<Long, ArrayList<Long[]>> entry : stopsWaitingTimes.entrySet()) {
 
 			long initialTime = 0;
@@ -226,6 +229,5 @@ public class Main {
 			
 			System.out.println();
 		}
-		*/
 	}
 }
