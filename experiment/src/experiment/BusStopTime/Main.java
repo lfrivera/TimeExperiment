@@ -2,6 +2,8 @@ package experiment.BusStopTime;
 
 import java.text.ParseException;
 import java.util.ArrayList;
+import java.util.Collections;
+import java.util.Comparator;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -163,6 +165,18 @@ public class Main {
 	
 	public static void order_Times() {
 		
+		for (Map.Entry<Long, ArrayList<Long[]>> entry : busesWaitingTimes.entrySet()) {
+
+			if( entry.getKey() == 500601) {
+					
+				Collections.sort(entry.getValue(), new Comparator<Long[]>() {
+					public int compare(Long[] o1, Long[] o2) {
+						return o1[3].compareTo(o2[3]);
+					}
+				});
+				
+			}
+		}
 	}
 	
 	public static void time_Of_Polygon() {
