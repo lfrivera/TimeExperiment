@@ -4,6 +4,7 @@ import java.text.ParseException;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Comparator;
+import java.util.Date;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -31,7 +32,7 @@ public class Main {
 
 		ArrayList<SITMStop> stopsQuery = DataSource.findAllStopsByLine(261, lineId);
 		stops = new HashMap<>();
-		stopsBuses = new HashMap<>();
+		stopsBuses = new HashMap<>(); 
 
 		stopsWaitingTimes = new HashMap<>();
 		busesWaitingTimes = new HashMap<>();
@@ -230,9 +231,19 @@ public class Main {
 				
 				System.out.println("Stop Id " + entry.getKey());
 	
-				for (Long[] data : entry.getValue()) {
-					long si = data[2]-data[3];
-					System.out.println(" Si: "+si);
+				for (int i = 0; i < entry.getValue().size()-1; i++) {
+					Long[] dataPrev = entry.getValue().get(i);
+					Long[] data = entry.getValue().get(i+1);
+					long Si = 0;
+					
+					if(dataPrev[2]>data[3]) {
+						Si = data[2]-dataPrev[2];
+					}else {
+						Si = data[2]-data[3];
+					}
+					
+					System.out.println(" Si: "+Si);
+//					System.out.println(new Date(data[3]*1000).toString()+","+Si);
 				}
 				
 				System.out.println();
@@ -250,9 +261,17 @@ public class Main {
 				
 				System.out.println("Stop Id " + entry.getKey());
 	
-				for (Long[] data : entry.getValue()) {
-					long di = data[3]-data[1];
-					System.out.println(" Di: "+di);
+				for (int i = 0; i < entry.getValue().size()-1; i++) {
+					Long[] dataPrev = entry.getValue().get(i);
+					Long[] data = entry.getValue().get(i+1);
+					long Di = 0;
+					
+					if(dataPrev[2]>data[3]) {
+						Di = dataPrev[2]-data[3];
+					}
+					
+					System.out.println(" Di: "+Di);
+//					System.out.println(new Date(data[3]*1000).toString()+","+Di);
 				}
 				
 				System.out.println();
@@ -271,10 +290,11 @@ public class Main {
 				System.out.println("Stop Id " + entry.getKey());
 	
 				for (int i = 0; i < entry.getValue().size()-1; i++) {
-					Long[] data = entry.getValue().get(i);
-					Long[] dataNext = entry.getValue().get(i+1);
-					long Ai = dataNext[3]-data[3];
-					System.out.println(" Ai: "+Ai);
+					Long[] dataPrev = entry.getValue().get(i);
+					Long[] data = entry.getValue().get(i+1);
+					long Ai = data[3]-dataPrev[3];
+//					System.out.println(" Ai: "+Ai);
+					System.out.println(new Date(dataPrev[3]*1000).toString()+","+Ai);
 				}
 				
 				System.out.println();

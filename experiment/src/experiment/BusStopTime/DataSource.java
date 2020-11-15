@@ -44,7 +44,7 @@ public class DataSource {
 				if (data[7].equals(lineId + "")) {
 
 					String datagramData = data[0];
-					long datagramDateTime = dateFormat.parse(datagramData).getTime() / 1000;
+					long datagramDateTime = dateFormat.parse(datagramData).getTime();
 					long busId = Long.parseLong(data[1]);
 					long stopId = Long.parseLong(data[2]);
 					long odometer = Long.parseLong(data[3]);
@@ -91,7 +91,7 @@ public class DataSource {
 				if (data.length > 1 && data[7].equals(lineId + "")) {
 
 					String datagramData = changeFormat(data[10]);
-					long datagramDateTime = dateFormat.parse(datagramData).getTime() / 1000;
+					long datagramDateTime = dateFormat.parse(datagramData).getTime();
 					long busId = Long.parseLong(data[11]);
 					long stopId = Long.parseLong(data[2]);
 					long odometer = Long.parseLong(data[3]);
