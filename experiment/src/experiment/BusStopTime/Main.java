@@ -53,7 +53,7 @@ public class Main {
 	 */
 	public static void readDatagrams(long lineId) throws ParseException {
 
-		ArrayList<Datagram> datagrams = DataSource.readDatagrams2(lineId);
+		ArrayList<Datagram> datagrams = DataSource.readDatagrams3(lineId);
 
 		for (int n = 0; n < datagrams.size(); n++) {
 
@@ -104,7 +104,7 @@ public class Main {
 			}
 			
 		} else if (!x && isInStation) { // The bus is outside the polygon
-
+			
 			if (!buses.isEmpty()) { // The stop isn't empty
 				
 //				if(stopId==502300)
@@ -112,9 +112,9 @@ public class Main {
 				
 				Long[] times = new Long[4];
 				times[0] = datagram.getBusId();//busId
-				times[1] = buses.get(datagramIndex).getDatagramDateTime();//arrivalPolygon
-				times[2] = datagram.getDatagramDateTime();//leavePolygon
-				times[3] = (times[1]+times[2])/2;//Time of arrival, open doors
+				times[1] = buses.get(datagramIndex).getDatagramDateTime();//arrivalPolygon P
+				times[2] = datagram.getDatagramDateTime();//leavePolygon Q
+				times[3] = (times[1]+times[2])/2;//Time of arrival, open doors T
 				busesWaitingTimes.get(stopId).add(times);
 			}
 
@@ -242,8 +242,8 @@ public class Main {
 						Si = data[2]-data[3];
 					}
 					
-					System.out.println(" Si: "+Si);
-//					System.out.println(new Date(data[3]*1000).toString()+","+Si);
+//					System.out.println(" Si: "+Si);
+					System.out.println(new Date(data[3]*1000).toString()+","+Si);
 				}
 				
 				System.out.println();

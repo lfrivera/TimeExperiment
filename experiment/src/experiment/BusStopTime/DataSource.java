@@ -16,7 +16,9 @@ import experiment.model.SITMStop;
 public class DataSource {
 
 	public final static String DATAGRAMS_PATH = "data/datagrams.csv";
-	public final static String APRIL_PATH = "data/30-APR-19-sorted.csv";
+	public final static String APRIL_PATH_1 = "data/30-APR-19-sorted.csv";
+	public final static String APRIL_PATH_2 = "data/30-APR-sorted.csv";
+	
 	public final static String LINESTOPS_PATH = "data/linestops.csv";
 
 	public static File getSourceFile(String path) {
@@ -44,7 +46,7 @@ public class DataSource {
 				if (data[7].equals(lineId + "")) {
 
 					String datagramData = data[0];
-					long datagramDateTime = dateFormat.parse(datagramData).getTime();
+					long datagramDateTime = dateFormat.parse(datagramData).getTime()/1000;
 					long busId = Long.parseLong(data[1]);
 					long stopId = Long.parseLong(data[2]);
 					long odometer = Long.parseLong(data[3]);
@@ -72,8 +74,8 @@ public class DataSource {
 
 	public static ArrayList<Datagram> readDatagrams2(long lineId) {
 
-		DateFormat dateFormat = new SimpleDateFormat("dd-MM-yy HH.mm.ss");
-		File sourceFile = DataSource.getSourceFile(APRIL_PATH);
+		DateFormat dateFormat = new SimpleDateFormat("dd-MMM-yy HH.mm.ss",Locale.ENGLISH);
+		File sourceFile = DataSource.getSourceFile(APRIL_PATH_1);
 		ArrayList<Datagram> datagrams = new ArrayList<>();
 		BufferedReader br;
 		String text = "";
@@ -91,7 +93,7 @@ public class DataSource {
 				if (data.length > 1 && data[7].equals(lineId + "")) {
 
 					String datagramData = changeFormat(data[10]);
-					long datagramDateTime = dateFormat.parse(datagramData).getTime();
+					long datagramDateTime = dateFormat.parse(datagramData).getTime()/1000;
 					long busId = Long.parseLong(data[11]);
 					long stopId = Long.parseLong(data[2]);
 					long odometer = Long.parseLong(data[3]);
@@ -111,14 +113,59 @@ public class DataSource {
 
 			br.close();
 		} catch (Exception e) {
-			System.out.println(text);
 			e.printStackTrace();
 		}
 		return datagrams;
 	}
 
+	public static ArrayList<Datagram> readDatagrams3(long lineId) {
+
+		DateFormat dateFormat = new SimpleDateFormat("dd-MMM-yy HH:mm:ss",Locale.ENGLISH);
+		File sourceFile = DataSource.getSourceFile(APRIL_PATH_2);
+		ArrayList<Datagram> datagrams = new ArrayList<>();
+		BufferedReader br;
+		String text = "";
+
+		try {
+
+			br = new BufferedReader(new FileReader(sourceFile));
+			text = br.readLine();
+			text = br.readLine();
+
+			while (text != null && !text.equals("")) {
+
+				String[] data = text.split(",");
+
+				if (data.length > 1 && data[7].equals(lineId + "")) {
+
+					String datagramData = data[10];
+					long datagramDateTime = dateFormat.parse(data[10]).getTime()/1000;
+					long busId = Long.parseLong(data[11]);	
+					long stopId = Long.parseLong(data[2]);
+					long odometer = Long.parseLong(data[3]);
+					double longitude = Long.parseLong(data[5]);
+					double latitude = Long.parseLong(data[4]);
+					long taskId = Long.parseLong(data[6]);
+					long tripId = Long.parseLong(data[8]);
+
+					if (longitude != -1 && latitude != -1) {
+						Datagram datagram = new Datagram(datagramDateTime, datagramData, busId, stopId, odometer, longitude / 10000000, latitude / 10000000, taskId, lineId, tripId);
+						datagrams.add(datagram);
+					}
+				}
+
+				text = br.readLine();
+			}
+
+			br.close();
+		} catch (Exception e) {
+			e.printStackTrace();
+		}
+		return datagrams;
+	}
+	
 	public static String changeFormat(String date) {
-		String day = date.substring(0, 3) + "04" + date.substring(6, 9);
+		String day = date.substring(0,9);
 		String hour = date.substring(10, 12);
 		String minSec = date.substring(12, 18);
 		String meridians = date.substring(26, 28);
