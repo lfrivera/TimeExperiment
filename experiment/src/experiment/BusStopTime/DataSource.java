@@ -14,10 +14,6 @@ import experiment.model.SITMLineStop;
 import experiment.model.SITMStop;
 
 public class DataSource {
-
-	public final static String DATAGRAMS_PATH = "data/datagrams.csv";
-	public final static String APRIL_PATH_1 = "data/30-APR-19-sorted.csv";
-	public final static String APRIL_PATH_2 = "data/30-APR-sorted.csv";
 	
 	public final static String LINESTOPS_PATH = "data/linestops.csv";
 
@@ -25,10 +21,10 @@ public class DataSource {
 		return new File(path);
 	}
 
-	public static ArrayList<Datagram> readDatagrams1(long lineId) {
+	public static ArrayList<Datagram> readDatagrams1(long lineId,String path) {
 
 		DateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd hh:mm:ss");
-		File sourceFile = DataSource.getSourceFile(DATAGRAMS_PATH);
+		File sourceFile = DataSource.getSourceFile(path);
 		ArrayList<Datagram> datagrams = new ArrayList<>();
 		BufferedReader br;
 		String text = "";
@@ -72,10 +68,10 @@ public class DataSource {
 		return datagrams;
 	}
 
-	public static ArrayList<Datagram> readDatagrams2(long lineId) {
+	public static ArrayList<Datagram> readDatagrams2(long lineId, String path) {
 
 		DateFormat dateFormat = new SimpleDateFormat("dd-MMM-yy HH.mm.ss",Locale.ENGLISH);
-		File sourceFile = DataSource.getSourceFile(APRIL_PATH_1);
+		File sourceFile = DataSource.getSourceFile(path);
 		ArrayList<Datagram> datagrams = new ArrayList<>();
 		BufferedReader br;
 		String text = "";
@@ -118,10 +114,10 @@ public class DataSource {
 		return datagrams;
 	}
 
-	public static ArrayList<Datagram> readDatagrams3(long lineId) {
+	public static ArrayList<Datagram> readDatagrams3(long lineId, String path) {
 
 		DateFormat dateFormat = new SimpleDateFormat("dd-MMM-yy HH:mm:ss",Locale.ENGLISH);
-		File sourceFile = DataSource.getSourceFile(APRIL_PATH_2);
+		File sourceFile = DataSource.getSourceFile(path);
 		ArrayList<Datagram> datagrams = new ArrayList<>();
 		BufferedReader br;
 		String text = "";

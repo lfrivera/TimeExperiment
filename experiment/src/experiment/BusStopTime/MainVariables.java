@@ -11,7 +11,7 @@ import java.util.Map;
 import experiment.model.Datagram;
 import experiment.model.SITMStop;
 
-public class Main {
+public class MainVariables {
 	
 	public static HashMap<Long, SITMStop> stops; //HashMap with the stops
 	public static HashMap<Long, ArrayList<Datagram>> stopsBuses; // HashMap with the array of buses in one stop
@@ -21,8 +21,8 @@ public class Main {
 
 	public static void main(String[] args) throws ParseException {
 		init(131);
-		readDatagrams(131);
-		postAnalysis();
+		readDatagrams(131,500300);
+		postAnalysis(500300);
 	}
 
 	/*
@@ -51,17 +51,18 @@ public class Main {
 	/*
 	 * This method read the datagrams file
 	 */
-	public static void readDatagrams(long lineId) throws ParseException {
+	public static void readDatagrams(long lineId, long observerStop) throws ParseException {
 
-		ArrayList<Datagram> datagrams = DataSource.readDatagrams3(lineId);
+		String path = "data/02-APR-19-sorted.csv";
+		ArrayList<Datagram> datagrams = DataSource.readDatagrams3(lineId,path);
 
 		for (int n = 0; n < datagrams.size(); n++) {
 
 			Datagram datagram = datagrams.get(n);
 			long stopId = datagram.getStopId();
 
-			if (stopsBuses.containsKey(stopId)) {
-				analysisPerBus(datagram);
+			if (stops.containsKey(stopId)) {
+				analysisPerBus(datagram, observerStop);
 			}
 		}
 		
@@ -70,7 +71,7 @@ public class Main {
 	/*
 	 * This method analyze one datagram
 	 */
-	public static void analysisPerBus(Datagram datagram) throws ParseException {
+	public static void analysisPerBus(Datagram datagram, long observerStop) throws ParseException {
 
 		long stopId = datagram.getStopId();
 		ArrayList<Datagram> buses = stopsBuses.get(stopId);
@@ -88,11 +89,10 @@ public class Main {
 		}
 
 		boolean x = isInTheStop(datagram, stop);
-
 		
 		if (x) {// the bus is inside the polygon
 
-//			if(stopId==502300)
+//			if(stopId==observerStop)
 //				System.out.println("inside "+datagram.getBusId()+" | "+datagram.getDatagramDate()+" | "+datagram.getOdometer()+" | "+datagram.getLatitude()+","+datagram.getLongitude());
 
 			if (!isInStation) { // The bus arrive the stop
@@ -107,7 +107,7 @@ public class Main {
 			
 			if (!buses.isEmpty()) { // The stop isn't empty
 				
-//				if(stopId==502300)
+//				if(stopId==observerStop)
 //					System.out.println("=====> outside "+datagram.getBusId()+" | "+datagram.getDatagramDate()+" | "+datagram.getOdometer()+" | "+datagram.getLatitude()+","+datagram.getLongitude());
 				
 				Long[] times = new Long[4];
@@ -122,7 +122,7 @@ public class Main {
 
 			if (buses.isEmpty()) {// The stop is empty
 
-//				if(stopId==502300)
+//				if(stopId==observerStop)
 //					System.out.println("==============> Empty stop "+datagram.getBusId()+" | "+datagram.getDatagramDate()+" | "+datagram.getOdometer()+" | "+datagram.getLatitude()+","+datagram.getLongitude());
 
 				int lastPosition = stopsWaitingTimes.get(stopId).size() - 1;
@@ -154,21 +154,21 @@ public class Main {
 	/*
 	 * Post analysis, print the results in console 
 	 */
-	public static void postAnalysis() {
-		order_Times();
-		time_Of_Polygon();
-		time_Of_Arrival(); 
-		time_Of_service();
-		delay_In_Queue();
-		interarrival_Time_Between_Buses();
+	public static void postAnalysis(long observerStop) {
+		order_Times(observerStop);
+		time_Of_Polygon(observerStop);
+		time_Of_Arrival(observerStop); 
+		time_Of_service(observerStop);
+		delay_In_Queue(observerStop);
+		interarrival_Time_Between_Buses(observerStop);
 		//excess_Waiting_Time_at_Bus_stop();
 	}
 	
-	public static void order_Times() {
+	public static void order_Times(long observerStop) {
 		
 		for (Map.Entry<Long, ArrayList<Long[]>> entry : busesWaitingTimes.entrySet()) {
 
-			if( entry.getKey() == 500601) {
+			if( entry.getKey() == observerStop) {
 					
 				Collections.sort(entry.getValue(), new Comparator<Long[]>() {
 					public int compare(Long[] o1, Long[] o2) {
@@ -180,13 +180,13 @@ public class Main {
 		}
 	}
 	
-	public static void time_Of_Polygon() {
+	public static void time_Of_Polygon(long observerStop) {
 		
 		System.out.println("---------------------------------------------------------------------------------");
 		
 		for (Map.Entry<Long, ArrayList<Long[]>> entry : busesWaitingTimes.entrySet()) {
 
-			if( entry.getKey() == 500601) {
+			if( entry.getKey() == observerStop) {
 				
 				System.out.println("Stop Id " + entry.getKey());
 				
@@ -202,15 +202,15 @@ public class Main {
 		}
 	}
 	
-	public static void time_Of_Arrival() {
+	public static void time_Of_Arrival(long observerStop) {
 		
 		System.out.println("---------------------------------------------------------------------------------");
 		
 		for (Map.Entry<Long, ArrayList<Long[]>> entry : busesWaitingTimes.entrySet()) {
 
-			if( entry.getKey() == 500601) {
+			if( entry.getKey() == observerStop) {
 				
-				System.out.println("Stop Id " + entry.getKey());
+				System.out.println("(Ti) Stop Id " + entry.getKey());
 	
 				for (Long[] data : entry.getValue()) {
 					System.out.println(" Ti: "+data[3]);
@@ -221,15 +221,15 @@ public class Main {
 		}
 	}
 	
-	public static void time_Of_service() {
+	public static void time_Of_service(long observerStop) {
 		
 		System.out.println("---------------------------------------------------------------------------------");
 		
 		for (Map.Entry<Long, ArrayList<Long[]>> entry : busesWaitingTimes.entrySet()) {
 
-			if( entry.getKey() == 500601) {
+			if( entry.getKey() == observerStop) {
 				
-				System.out.println("Stop Id " + entry.getKey());
+				System.out.println("(Si) Stop Id " + entry.getKey());
 	
 				for (int i = 0; i < entry.getValue().size()-1; i++) {
 					Long[] dataPrev = entry.getValue().get(i);
@@ -251,15 +251,15 @@ public class Main {
 		}
 	}
 	
-	public static void delay_In_Queue() {
+	public static void delay_In_Queue(long observerStop) {
 	
 		System.out.println("---------------------------------------------------------------------------------");
 		
 		for (Map.Entry<Long, ArrayList<Long[]>> entry : busesWaitingTimes.entrySet()) {
 
-			if( entry.getKey() == 500601) {
+			if( entry.getKey() == observerStop) {
 				
-				System.out.println("Stop Id " + entry.getKey());
+				System.out.println("(Di) Stop Id " + entry.getKey());
 	
 				for (int i = 0; i < entry.getValue().size()-1; i++) {
 					Long[] dataPrev = entry.getValue().get(i);
@@ -279,15 +279,15 @@ public class Main {
 		}
 	}
 	
-	public static void interarrival_Time_Between_Buses() {
+	public static void interarrival_Time_Between_Buses(long observerStop) {
 		
 		System.out.println("---------------------------------------------------------------------------------");
 		
 		for (Map.Entry<Long, ArrayList<Long[]>> entry : busesWaitingTimes.entrySet()) {
 
-			if( entry.getKey() == 500601) {
+			if( entry.getKey() == observerStop) {
 				
-				System.out.println("Stop Id " + entry.getKey());
+				System.out.println("(Ai) Stop Id " + entry.getKey());
 	
 				for (int i = 0; i < entry.getValue().size()-1; i++) {
 					Long[] dataPrev = entry.getValue().get(i);
