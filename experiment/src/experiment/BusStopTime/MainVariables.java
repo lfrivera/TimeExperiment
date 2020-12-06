@@ -98,7 +98,7 @@ public class MainVariables {
 			if (!isInStation) { // The bus arrive the stop
 				stopsBuses.get(stopId).add(datagram);
 				Long[] times = new Long[3];
-				times[1] = datagram.getDatagramDateTime();
+				times[1] = datagram.getDatagramDateLong();
 				stopsWaitingTimes.get(stopId).add(times);
 				
 			}
@@ -112,8 +112,8 @@ public class MainVariables {
 				
 				Long[] times = new Long[4];
 				times[0] = datagram.getBusId();//busId
-				times[1] = buses.get(datagramIndex).getDatagramDateTime();//arrivalPolygon P
-				times[2] = datagram.getDatagramDateTime();//leavePolygon Q
+				times[1] = buses.get(datagramIndex).getDatagramDateLong();//arrivalPolygon P
+				times[2] = datagram.getDatagramDateLong();//leavePolygon Q
 				times[3] = (times[1]+times[2])/2;//Time of arrival, open doors T
 				busesWaitingTimes.get(stopId).add(times);
 			}
@@ -128,7 +128,7 @@ public class MainVariables {
 				int lastPosition = stopsWaitingTimes.get(stopId).size() - 1;
 				Long[] times = stopsWaitingTimes.get(stopId).get(lastPosition);
 				times[0] = datagram.getBusId();
-				times[2] = datagram.getDatagramDateTime();
+				times[2] = datagram.getDatagramDateLong();
 			}
 		}
 	}

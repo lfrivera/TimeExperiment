@@ -43,6 +43,7 @@ public class DataSource {
 
 					String datagramData = data[0];
 					long datagramDateTime = dateFormat.parse(datagramData).getTime()/1000;
+					Date datagramDate = new Date(dateFormat.parse(data[0]).getTime());
 					long busId = Long.parseLong(data[1]);
 					long stopId = Long.parseLong(data[2]);
 					long odometer = Long.parseLong(data[3]);
@@ -52,7 +53,7 @@ public class DataSource {
 					long tripId = Long.parseLong(data[8]);
 
 					if (longitude != -1 && latitude != -1) {
-						Datagram datagram = new Datagram(datagramDateTime, datagramData, busId, stopId, odometer,
+						Datagram datagram = new Datagram(datagramDate,datagramDateTime, datagramData, busId, stopId, odometer,
 								longitude / 10000000, latitude / 10000000, taskId, lineId, tripId);
 						datagrams.add(datagram);
 					}
@@ -89,6 +90,7 @@ public class DataSource {
 				if (data.length > 1 && data[7].equals(lineId + "")) {
 
 					String datagramData = changeFormat(data[10]);
+					Date datagramDate = new Date(dateFormat.parse(data[10]).getTime());
 					long datagramDateTime = dateFormat.parse(datagramData).getTime()/1000;
 					long busId = Long.parseLong(data[11]);
 					long stopId = Long.parseLong(data[2]);
@@ -99,7 +101,7 @@ public class DataSource {
 					long tripId = Long.parseLong(data[8]);
 
 					if (longitude != -1 && latitude != -1) {
-						Datagram datagram = new Datagram(datagramDateTime, datagramData, busId, stopId, odometer, longitude / 10000000, latitude / 10000000, taskId, lineId, tripId);
+						Datagram datagram = new Datagram(datagramDate,datagramDateTime, datagramData, busId, stopId, odometer, longitude / 10000000, latitude / 10000000, taskId, lineId, tripId);
 						datagrams.add(datagram);
 					}
 				}
@@ -134,8 +136,9 @@ public class DataSource {
 
 				if (data.length > 1 && data[7].equals(lineId + "")) {
 
-					String datagramData = data[10];
-					long datagramDateTime = dateFormat.parse(data[10]).getTime()/1000;
+					String datagramDateString = data[10];
+					Date datagramDate = new Date(dateFormat.parse(data[10]).getTime());
+					long datagramDateLong = dateFormat.parse(data[10]).getTime()/1000;
 					long busId = Long.parseLong(data[11]);	
 					long stopId = Long.parseLong(data[2]);
 					long odometer = Long.parseLong(data[3]);
@@ -145,7 +148,7 @@ public class DataSource {
 					long tripId = Long.parseLong(data[8]);
 
 					if (longitude != -1 && latitude != -1) {
-						Datagram datagram = new Datagram(datagramDateTime, datagramData, busId, stopId, odometer, longitude / 10000000, latitude / 10000000, taskId, lineId, tripId);
+						Datagram datagram = new Datagram(datagramDate,datagramDateLong, datagramDateString, busId, stopId, odometer, longitude / 10000000, latitude / 10000000, taskId, lineId, tripId);
 						datagrams.add(datagram);
 					}
 				}
