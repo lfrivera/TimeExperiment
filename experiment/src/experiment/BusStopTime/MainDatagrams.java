@@ -10,21 +10,15 @@ import experiment.model.Datagram;
 import experiment.model.SITMStop;
 
 class TimeDatagrams {
-	private Calendar calendar;
 	private int numDatagrams;
+	private int hour;
+	private int minutes;
 
-	public TimeDatagrams(Calendar calendar, int numDatagrams) {
+	public TimeDatagrams(int numDatagrams, int hour, int minutes) {
 		super();
-		this.calendar = calendar;
 		this.numDatagrams = numDatagrams;
-	}
-
-	public Calendar getCalendar() {
-		return calendar;
-	}
-
-	public void setCalendar(Calendar calendar) {
-		this.calendar = calendar;
+		this.hour = hour;
+		this.minutes = minutes;
 	}
 
 	public int getNumDatagrams() {
@@ -35,13 +29,24 @@ class TimeDatagrams {
 		this.numDatagrams = numDatagrams;
 	}
 
+	public int getHour() {
+		return hour;
+	}
+
+	public void setHour(int hour) {
+		this.hour = hour;
+	}
+
+	public int getMinutes() {
+		return minutes;
+	}
+
+	public void setMinutes(int minutes) {
+		this.minutes = minutes;
+	}
+
 	public String getDate() {
-		int Hour = calendar.get(Calendar.HOUR_OF_DAY);
-		int minutes = calendar.get(Calendar.MINUTE);
-		if (minutes == 0) {
-			return Hour + ":" + minutes + "0";
-		}
-		return Hour + ":" + minutes;
+		return hour + ":" + minutes;
 	}
 }
 
@@ -72,8 +77,19 @@ public class MainDatagrams {
 		for (int i = 0; i < stopsQuery.size(); i++) {
 			if (!stops.containsKey(stopsQuery.get(i).getStopId())) {
 				stops.put(stopsQuery.get(i).getStopId(), stopsQuery.get(i));
-				stopsDatagrams.put(stopsQuery.get(i).getStopId(), new ArrayList<>());
 				stopsTime.put(stopsQuery.get(i).getStopId(), 0);
+
+				ArrayList<TimeDatagrams> td = new ArrayList<TimeDatagrams>();
+				for (int j = 4; j < 24; j++) {
+					td.add(new TimeDatagrams(0, j, 0));
+					td.add(new TimeDatagrams(0, j, 10));
+					td.add(new TimeDatagrams(0, j, 20));
+					td.add(new TimeDatagrams(0, j, 30));
+					td.add(new TimeDatagrams(0, j, 40));
+					td.add(new TimeDatagrams(0, j, 50));
+				}
+
+				stopsDatagrams.put(stopsQuery.get(i).getStopId(), td);
 			}
 		}
 	}
@@ -107,38 +123,49 @@ public class MainDatagrams {
 		totalDatagrams++;
 		datagram.getDatagramDate();
 
-		ArrayList<TimeDatagrams> list = stopsDatagrams.get(stopId);
-		int minute = stopsTime.get(stopId);
-
 		Calendar calendar = GregorianCalendar.getInstance();
 		calendar.setTime(datagram.getDatagramDate());
 
-		int actualMinute = calendar.get(Calendar.MINUTE);
+		int currentMinute = calendar.get(Calendar.MINUTE);
+		int currentHour = calendar.get(Calendar.HOUR);
 
-		if (list.size() == 0) {
-			list.add(new TimeDatagrams(calendar, 1));
-			stopsTime.put(stopId, (int) (actualMinute / 10) * 10);
-			// System.out.println(minute+" ====================");
+		ArrayList<TimeDatagrams> datagramsList = stopsDatagrams.get(stopId);
+		TimeDatagrams timeDatagrams = datagramsList.get(datagramsList.size() - 1);
 
-		} else {
+		if (currentMinute >= 0 && currentMinute < 10) {
+			
+			System.out.println("[00-10) - "+currentHour+":"+currentMinute);
+			
+		}
 
-			TimeDatagrams td = list.get(list.size() - 1);
-			int limitTime = minute + 10;
+		if (currentMinute >= 10 && currentMinute < 20) {
+			
+			System.out.println("[10-20) - "+currentHour+":"+currentMinute);
+			
+		}
 
-			if (minute != 0 && actualMinute <= 9) {
-				list.add(new TimeDatagrams(calendar, 1));
-				stopsTime.put(stopId, 0);
-				// System.out.println(minute+" ++++++++++++++++++");
-			}
+		if (currentMinute >= 20 && currentMinute < 30) {
+			
+			System.out.println("[20-30) - "+currentHour+":"+currentMinute);
+			
+		}
 
-			if (actualMinute < limitTime) {
-				td.setNumDatagrams(td.getNumDatagrams() + 1);
-			} else {
-				list.add(new TimeDatagrams(calendar, 1));
-				stopsTime.put(stopId, (int) (actualMinute / 10) * 10);
-				// System.out.println(minute+" ====================");
-			}
-//				System.out.println(calendar.get(Calendar.HOUR_OF_DAY)+":"+calendar.get(Calendar.MINUTE));
+		if (currentMinute >= 30 && currentMinute < 40) {
+			
+			System.out.println("[30-40) - "+currentHour+":"+currentMinute);
+			
+		}
+
+		if (currentMinute >= 40 && currentMinute < 50) {
+			
+			System.out.println("[40-50) - "+currentHour+":"+currentMinute);
+			
+		}
+
+		if (currentMinute >= 50 && currentMinute < 60) {
+			
+			System.out.println("[50-60) - "+currentHour+":"+currentMinute);
+			
 		}
 
 	}
@@ -149,7 +176,7 @@ public class MainDatagrams {
 	public static void results() {
 
 		long[] studiedStops = { 504009, 500200, 500250, 500300 };
-		System.out.println("total datagramas T31" + totalDatagrams);
+		System.out.println("total datagramas T31 " + totalDatagrams);
 		System.out.println(" ");
 
 		for (long id : studiedStops) {
@@ -161,8 +188,9 @@ public class MainDatagrams {
 
 				double users = (double) timeDatagrams.getNumDatagrams() / totalDatagrams * 450000;
 				int numUsers = (int) users;
-//				System.out.println("Date: " + timeDatagrams.getDate() + " | Datagramas: "+ timeDatagrams.getNumDatagrams() + " | Usuarios: " + numUsers);
-				System.out.println(timeDatagrams.getDate()+","+numUsers);
+				System.out.println("Date: " + timeDatagrams.getDate() + " | Datagramas: "
+						+ timeDatagrams.getNumDatagrams() + " | Usuarios: " + numUsers);
+//				System.out.println(timeDatagrams.getDate()+","+timeDatagrams.getNumDatagrams()+","+numUsers);
 			}
 
 			System.out.println();
