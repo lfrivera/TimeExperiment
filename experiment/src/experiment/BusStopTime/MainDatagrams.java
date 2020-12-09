@@ -127,44 +127,44 @@ public class MainDatagrams {
 		calendar.setTime(datagram.getDatagramDate());
 
 		int currentMinute = calendar.get(Calendar.MINUTE);
-		int currentHour = calendar.get(Calendar.HOUR);
+		int currentHour = calendar.get(Calendar.HOUR_OF_DAY);
 
 		ArrayList<TimeDatagrams> datagramsList = stopsDatagrams.get(stopId);
-		TimeDatagrams timeDatagrams = datagramsList.get(datagramsList.size() - 1);
-
-		if (currentMinute >= 0 && currentMinute < 10) {
+		
+		int position = (currentHour*6)-24;
+		
+		if(position>=0) {
 			
-			System.out.println("[00-10) - "+currentHour+":"+currentMinute);
+			if (currentMinute >= 0 && currentMinute < 10) {
+				//System.out.println("[00-10) - "+currentHour+":"+currentMinute+" "+datagramsList.get(position).getDate());
+				datagramsList.get(position).setNumDatagrams(datagramsList.get(position).getNumDatagrams()+1);
+				
+			}
 			
-		}
-
-		if (currentMinute >= 10 && currentMinute < 20) {
+			if (currentMinute >= 10 && currentMinute < 20) {
+				//System.out.println("[10-20) - "+currentHour+":"+currentMinute+" "+datagramsList.get(position+1).getDate());
+				datagramsList.get(position+1).setNumDatagrams(datagramsList.get(position+1).getNumDatagrams()+1);
+			}
 			
-			System.out.println("[10-20) - "+currentHour+":"+currentMinute);
+			if (currentMinute >= 20 && currentMinute < 30) {
+				//System.out.println("[20-30) - "+currentHour+":"+currentMinute+" "+datagramsList.get(position+2).getDate());
+				datagramsList.get(position+2).setNumDatagrams(datagramsList.get(position+2).getNumDatagrams()+1);
+			}
 			
-		}
-
-		if (currentMinute >= 20 && currentMinute < 30) {
+			if (currentMinute >= 30 && currentMinute < 40) {
+				//System.out.println("[30-40) - "+currentHour+":"+currentMinute+" "+datagramsList.get(position+3).getDate());
+				datagramsList.get(position+3).setNumDatagrams(datagramsList.get(position+3).getNumDatagrams()+1);	
+			}
 			
-			System.out.println("[20-30) - "+currentHour+":"+currentMinute);
+			if (currentMinute >= 40 && currentMinute < 50) {
+				//System.out.println("[40-50) - "+currentHour+":"+currentMinute+" "+datagramsList.get(position+4).getDate());
+				datagramsList.get(position+4).setNumDatagrams(datagramsList.get(position+4).getNumDatagrams()+1);
+			}
 			
-		}
-
-		if (currentMinute >= 30 && currentMinute < 40) {
-			
-			System.out.println("[30-40) - "+currentHour+":"+currentMinute);
-			
-		}
-
-		if (currentMinute >= 40 && currentMinute < 50) {
-			
-			System.out.println("[40-50) - "+currentHour+":"+currentMinute);
-			
-		}
-
-		if (currentMinute >= 50 && currentMinute < 60) {
-			
-			System.out.println("[50-60) - "+currentHour+":"+currentMinute);
+			if (currentMinute >= 50 && currentMinute < 60) {
+				//System.out.println("[50-60) - "+currentHour+":"+currentMinute+" "+datagramsList.get(position+5).getDate());
+				datagramsList.get(position+5).setNumDatagrams(datagramsList.get(position+5).getNumDatagrams()+1);
+			}
 			
 		}
 
