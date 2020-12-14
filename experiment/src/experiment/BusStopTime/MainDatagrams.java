@@ -175,10 +175,10 @@ public class MainDatagrams {
 	 */
 	public static void results() {
 
-		long[] studiedStops = { 504009, 500200, 500250, 500300 };
+		long[] studiedStops = { 504009, 500200, 500250, 500300, 500601 };
 		System.out.println("total datagramas T31 " + totalDatagrams);
+		System.out.println("Total detagramas del sistema: 2495586");
 		System.out.println(" ");
-
 		for (long id : studiedStops) {
 
 			ArrayList<TimeDatagrams> datagramsList = stopsDatagrams.get(id);
@@ -186,11 +186,10 @@ public class MainDatagrams {
 
 			for (TimeDatagrams timeDatagrams : datagramsList) {
 
-				double users = (double) timeDatagrams.getNumDatagrams() / totalDatagrams * 450000;
+				double users = (double) timeDatagrams.getNumDatagrams() / 2495586 * 450000;
 				int numUsers = (int) users;
-				System.out.println("Date: " + timeDatagrams.getDate() + " | Datagramas: "
-						+ timeDatagrams.getNumDatagrams() + " | Usuarios: " + numUsers);
-//				System.out.println(timeDatagrams.getDate()+","+timeDatagrams.getNumDatagrams()+","+numUsers);
+//				System.out.println("Date: " + timeDatagrams.getDate() + " | Datagramas: "+ timeDatagrams.getNumDatagrams() + " | Usuarios: " + numUsers);
+				System.out.println(timeDatagrams.getDate()+","+timeDatagrams.getNumDatagrams()+","+numUsers);
 			}
 
 			System.out.println();

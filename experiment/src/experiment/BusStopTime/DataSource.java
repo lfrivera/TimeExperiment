@@ -121,6 +121,7 @@ public class DataSource {
 		DateFormat dateFormat = new SimpleDateFormat("dd-MMM-yy HH:mm:ss",Locale.ENGLISH);
 		File sourceFile = DataSource.getSourceFile(path);
 		ArrayList<Datagram> datagrams = new ArrayList<>();
+		int numDatagrams = 1;
 		BufferedReader br;
 		String text = "";
 
@@ -152,7 +153,7 @@ public class DataSource {
 						datagrams.add(datagram);
 					}
 				}
-
+				numDatagrams++;
 				text = br.readLine();
 			}
 
@@ -160,6 +161,7 @@ public class DataSource {
 		} catch (Exception e) {
 			e.printStackTrace();
 		}
+		//System.out.println("Number of datagrams :"+numDatagrams);
 		return datagrams;
 	}
 	
