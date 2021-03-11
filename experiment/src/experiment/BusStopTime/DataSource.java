@@ -116,9 +116,9 @@ public class DataSource {
 		return datagrams;
 	}
 
-	public static ArrayList<Datagram> readDatagrams3(long lineId, String path) {
+	public static ArrayList<Datagram> readDatagrams3(long lineId, String path, boolean printDate) {
 
-		DateFormat dateFormat = new SimpleDateFormat("dd-MMM-yy HH:mm:ss",Locale.ENGLISH);
+		DateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss",Locale.ENGLISH);
 		File sourceFile = DataSource.getSourceFile(path);
 		ArrayList<Datagram> datagrams = new ArrayList<>();
 
@@ -137,14 +137,17 @@ public class DataSource {
 
 				if (data.length > 1 && data[7].equals(lineId + "")) {
 
-					String datagramDateString = data[10];
-					Date datagramDate = new Date(dateFormat.parse(data[10]).getTime());
-					long datagramDateLong = dateFormat.parse(data[10]).getTime()/1000;
-					long busId = Long.parseLong(data[11]);	
+					String datagramDateString = data[0];
+					if(printDate) {
+						System.out.println(datagramDateString);
+					}
+					long datagramDateLong = dateFormat.parse(data[0]).getTime()/1000;
+					Date datagramDate = new Date(datagramDateLong);
+					long busId = Long.parseLong(data[1]);	
 					long stopId = Long.parseLong(data[2]);
 					long odometer = Long.parseLong(data[3]);
-					double longitude = Long.parseLong(data[5]);
-					double latitude = Long.parseLong(data[4]);
+					double longitude = Long.parseLong(data[4]);
+					double latitude = Long.parseLong(data[5]);
 					long taskId = Long.parseLong(data[6]);
 					long tripId = Long.parseLong(data[8]);
 

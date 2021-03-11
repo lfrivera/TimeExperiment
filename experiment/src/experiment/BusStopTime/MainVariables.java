@@ -1,5 +1,8 @@
 package experiment.BusStopTime;
 
+import java.io.File;
+import java.io.FileWriter;
+import java.io.IOException;
 import java.text.ParseException;
 import java.util.ArrayList;
 import java.util.Collections;
@@ -12,17 +15,33 @@ import experiment.model.Datagram;
 import experiment.model.SITMStop;
 
 public class MainVariables {
-	
-	public static HashMap<Long, SITMStop> stops; //HashMap with the stops
+	private static final boolean PRINT_INFO = false;
+	private static final long[] STOPS = {
+										 AnalyzedStops.SALOMIA_A1.getStopId(),
+										 AnalyzedStops.SALOMIA_B1.getStopId(),
+										 AnalyzedStops.POPULAR_A1.getStopId(),
+										 AnalyzedStops.POPULAR_B1.getStopId()
+										 };
+	private static final String FILENAME = System.getProperty("user.home") + File.separator + "interarrivalTimes.csv";
+
+	public static HashMap<Long, SITMStop> stops; // HashMap with the stops
 	public static HashMap<Long, ArrayList<Datagram>> stopsBuses; // HashMap with the array of buses in one stop
 
 	public static HashMap<Long, ArrayList<Long[]>> stopsWaitingTimes; // Excess Waiting Time at Bus stop
-	public static HashMap<Long, ArrayList<Long[]>> busesWaitingTimes; // Bus Stop Time 
+	public static HashMap<Long, ArrayList<Long[]>> busesWaitingTimes; // Bus Stop Time
 
 	public static void main(String[] args) throws ParseException {
-		init(131);
-		readDatagrams(131,500300);
-		postAnalysis(500300);
+		try {
+			ArrayList<String> interarrivalTimes = new ArrayList<String>();
+			for(long stop : STOPS) {
+				init(131);
+				readDatagrams(131, stop);
+				postAnalysis(stop, interarrivalTimes);
+			}
+			saveResults(interarrivalTimes);
+		} catch(Exception e) {
+			
+		}
 	}
 
 	/*
@@ -32,7 +51,7 @@ public class MainVariables {
 
 		ArrayList<SITMStop> stopsQuery = DataSource.findAllStopsByLine(261, lineId);
 		stops = new HashMap<>();
-		stopsBuses = new HashMap<>(); 
+		stopsBuses = new HashMap<>();
 
 		stopsWaitingTimes = new HashMap<>();
 		busesWaitingTimes = new HashMap<>();
@@ -47,14 +66,14 @@ public class MainVariables {
 			}
 		}
 	}
-	
+
 	/*
 	 * This method read the datagrams file
 	 */
 	public static void readDatagrams(long lineId, long observerStop) throws ParseException {
 
-		String path = "data/02-APR-19-sorted.csv";
-		ArrayList<Datagram> datagrams = DataSource.readDatagrams3(lineId,path);
+		String path = "data/datagrams.csv";
+		ArrayList<Datagram> datagrams = DataSource.readDatagrams3(lineId, path, PRINT_INFO);
 
 		for (int n = 0; n < datagrams.size(); n++) {
 
@@ -65,9 +84,9 @@ public class MainVariables {
 				analysisPerBus(datagram, observerStop);
 			}
 		}
-		
+
 	}
-	
+
 	/*
 	 * This method analyze one datagram
 	 */
@@ -89,7 +108,7 @@ public class MainVariables {
 		}
 
 		boolean x = isInTheStop(datagram, stop);
-		
+
 		if (x) {// the bus is inside the polygon
 
 //			if(stopId==observerStop)
@@ -100,21 +119,21 @@ public class MainVariables {
 				Long[] times = new Long[3];
 				times[1] = datagram.getDatagramDateLong();
 				stopsWaitingTimes.get(stopId).add(times);
-				
+
 			}
-			
+
 		} else if (!x && isInStation) { // The bus is outside the polygon
-			
+
 			if (!buses.isEmpty()) { // The stop isn't empty
-				
+
 //				if(stopId==observerStop)
 //					System.out.println("=====> outside "+datagram.getBusId()+" | "+datagram.getDatagramDate()+" | "+datagram.getOdometer()+" | "+datagram.getLatitude()+","+datagram.getLongitude());
-				
+
 				Long[] times = new Long[4];
-				times[0] = datagram.getBusId();//busId
-				times[1] = buses.get(datagramIndex).getDatagramDateLong();//arrivalPolygon P
-				times[2] = datagram.getDatagramDateLong();//leavePolygon Q
-				times[3] = (times[1]+times[2])/2;//Time of arrival, open doors T
+				times[0] = datagram.getBusId();// busId
+				times[1] = buses.get(datagramIndex).getDatagramDateLong();// arrivalPolygon P
+				times[2] = datagram.getDatagramDateLong();// leavePolygon Q
+				times[3] = (times[1] + times[2]) / 2;// Time of arrival, open doors T
 				busesWaitingTimes.get(stopId).add(times);
 			}
 
@@ -132,9 +151,10 @@ public class MainVariables {
 			}
 		}
 	}
-	
+
 	/*
-	 * This method evaluates that the bus is inside the area of ​​the stop or station
+	 * This method evaluates that the bus is inside the area of ​​the stop or
+	 * station
 	 */
 	public static boolean isInTheStop(Datagram datagram, SITMStop stop) {
 
@@ -145,168 +165,189 @@ public class MainVariables {
 
 		double dLat = Math.toRadians(lat2 - lat1);
 		double dLng = Math.toRadians(lng2 - lng1);
-		double a = Math.sin(dLat / 2) * Math.sin(dLat / 2) + Math.cos(Math.toRadians(lat1))* Math.cos(Math.toRadians(lat2)) * Math.sin(dLng / 2) * Math.sin(dLng / 2);
+		double a = Math.sin(dLat / 2) * Math.sin(dLat / 2) + Math.cos(Math.toRadians(lat1))
+				* Math.cos(Math.toRadians(lat2)) * Math.sin(dLng / 2) * Math.sin(dLng / 2);
 		double c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
 
 		return c <= 0.00003 ? true : false;
 	}
-	
+
 	/*
-	 * Post analysis, print the results in console 
+	 * Post analysis, print the results in console
 	 */
-	public static void postAnalysis(long observerStop) {
+	public static void postAnalysis(long observerStop, ArrayList<String> interarrivalTimes) {
 		order_Times(observerStop);
-		time_Of_Polygon(observerStop);
-		time_Of_Arrival(observerStop); 
-		time_Of_service(observerStop);
-		delay_In_Queue(observerStop);
-		interarrival_Time_Between_Buses(observerStop);
-		//excess_Waiting_Time_at_Bus_stop();
+		if(PRINT_INFO) {
+			time_Of_Polygon(observerStop);
+			time_Of_Arrival(observerStop);
+			time_Of_service(observerStop);
+			delay_In_Queue(observerStop);
+			interarrival_Time_Between_Buses(observerStop);
+		}
+		collectAiResults(observerStop, interarrivalTimes);
+		// excess_Waiting_Time_at_Bus_stop();
 	}
-	
+
 	public static void order_Times(long observerStop) {
-		
+
 		for (Map.Entry<Long, ArrayList<Long[]>> entry : busesWaitingTimes.entrySet()) {
 
-			if( entry.getKey() == observerStop) {
-					
+			if (entry.getKey() == observerStop) {
+
 				Collections.sort(entry.getValue(), new Comparator<Long[]>() {
 					public int compare(Long[] o1, Long[] o2) {
 						return o1[3].compareTo(o2[3]);
 					}
 				});
-				
+
 			}
 		}
 	}
-	
+
 	public static void time_Of_Polygon(long observerStop) {
-		
+
 		System.out.println("---------------------------------------------------------------------------------");
-		
+
 		for (Map.Entry<Long, ArrayList<Long[]>> entry : busesWaitingTimes.entrySet()) {
 
-			if( entry.getKey() == observerStop) {
-				
+			if (entry.getKey() == observerStop) {
+
 				System.out.println("Stop Id " + entry.getKey());
-				
+
 				for (Long[] data : entry.getValue()) {
-					long time = data[2]-data[1];
-					System.out.print("arrive: "+data[1]);
-					System.out.print(" leave: "+data[2]);
-					System.out.println(" timeInside: "+time);
+					long time = data[2] - data[1];
+					System.out.print("arrive: " + data[1]);
+					System.out.print(" leave: " + data[2]);
+					System.out.println(" timeInside: " + time);
 				}
-				
+
 				System.out.println();
 			}
 		}
 	}
-	
+
 	public static void time_Of_Arrival(long observerStop) {
-		
+
 		System.out.println("---------------------------------------------------------------------------------");
-		
+
 		for (Map.Entry<Long, ArrayList<Long[]>> entry : busesWaitingTimes.entrySet()) {
 
-			if( entry.getKey() == observerStop) {
-				
+			if (entry.getKey() == observerStop) {
+
 				System.out.println("(Ti) Stop Id " + entry.getKey());
-	
+
 				for (Long[] data : entry.getValue()) {
-					System.out.println(" Ti: "+data[3]);
+					System.out.println(" Ti: " + data[3]);
 				}
-				
+
 				System.out.println();
 			}
 		}
 	}
-	
+
 	public static void time_Of_service(long observerStop) {
-		
+
 		System.out.println("---------------------------------------------------------------------------------");
-		
+
 		for (Map.Entry<Long, ArrayList<Long[]>> entry : busesWaitingTimes.entrySet()) {
 
-			if( entry.getKey() == observerStop) {
-				
+			if (entry.getKey() == observerStop) {
+
 				System.out.println("(Si) Stop Id " + entry.getKey());
-	
-				for (int i = 0; i < entry.getValue().size()-1; i++) {
+
+				for (int i = 0; i < entry.getValue().size() - 1; i++) {
 					Long[] dataPrev = entry.getValue().get(i);
-					Long[] data = entry.getValue().get(i+1);
+					Long[] data = entry.getValue().get(i + 1);
 					long Si = 0;
-					
-					if(dataPrev[2]>data[3]) {
-						Si = data[2]-dataPrev[2];
-					}else {
-						Si = data[2]-data[3];
+
+					if (dataPrev[2] > data[3]) {
+						Si = data[2] - dataPrev[2];
+					} else {
+						Si = data[2] - data[3];
 					}
-					
+
 //					System.out.println(" Si: "+Si);
-					System.out.println(new Date(data[3]*1000).toString()+","+Si);
+					System.out.println(new Date(data[3] * 1000).toString() + "," + Si);
 				}
-				
+
 				System.out.println();
 			}
 		}
 	}
-	
+
 	public static void delay_In_Queue(long observerStop) {
-	
+
 		System.out.println("---------------------------------------------------------------------------------");
-		
+
 		for (Map.Entry<Long, ArrayList<Long[]>> entry : busesWaitingTimes.entrySet()) {
 
-			if( entry.getKey() == observerStop) {
-				
+			if (entry.getKey() == observerStop) {
+
 				System.out.println("(Di) Stop Id " + entry.getKey());
-	
-				for (int i = 0; i < entry.getValue().size()-1; i++) {
+
+				for (int i = 0; i < entry.getValue().size() - 1; i++) {
 					Long[] dataPrev = entry.getValue().get(i);
-					Long[] data = entry.getValue().get(i+1);
+					Long[] data = entry.getValue().get(i + 1);
 					long Di = 0;
-					
-					if(dataPrev[2]>data[3]) {
-						Di = dataPrev[2]-data[3];
+
+					if (dataPrev[2] > data[3]) {
+						Di = dataPrev[2] - data[3];
 					}
-					
-					System.out.println(" Di: "+Di);
+
+					System.out.println(" Di: " + Di);
 //					System.out.println(new Date(data[3]*1000).toString()+","+Di);
 				}
-				
+
 				System.out.println();
 			}
 		}
 	}
-	
+
 	public static void interarrival_Time_Between_Buses(long observerStop) {
-		
+
 		System.out.println("---------------------------------------------------------------------------------");
-		
+
 		for (Map.Entry<Long, ArrayList<Long[]>> entry : busesWaitingTimes.entrySet()) {
 
-			if( entry.getKey() == observerStop) {
-				
+			if (entry.getKey() == observerStop) {
+
 				System.out.println("(Ai) Stop Id " + entry.getKey());
-	
-				for (int i = 0; i < entry.getValue().size()-1; i++) {
+
+				for (int i = 0; i < entry.getValue().size() - 1; i++) {
 					Long[] dataPrev = entry.getValue().get(i);
-					Long[] data = entry.getValue().get(i+1);
-					long Ai = data[3]-dataPrev[3];
+					Long[] data = entry.getValue().get(i + 1);
+					long Ai = data[3] - dataPrev[3];
 //					System.out.println(" Ai: "+Ai);
-					System.out.println(new Date(dataPrev[3]*1000).toString()+","+Ai);
+					String result = new Date(dataPrev[3] * 1000).toString() + "," + Ai;
+					System.out.println(result);
 				}
-				
-				System.out.println();
+
 			}
-			
+
 		}
 	}
 	
+	private static void collectAiResults(long observerStop, ArrayList<String> interarrivalTimes) {
+		for (Map.Entry<Long, ArrayList<Long[]>> entry : busesWaitingTimes.entrySet()) {
+
+			if (entry.getKey() == observerStop) {
+				for (int i = 0; i < entry.getValue().size() - 1; i++) {
+					Long[] dataPrev = entry.getValue().get(i);
+					Long[] data = entry.getValue().get(i + 1);
+					long Ai = data[3] - dataPrev[3];
+					String result = new Date(dataPrev[3] * 1000).toString() + "," + Ai;
+					interarrivalTimes.add(entry.getKey() + "," + stops.get(entry.getKey()).getLongName() + "," +result);
+				}
+
+			}
+
+		}
+	}
+
 	public static void excess_Waiting_Time_at_Bus_stop() {
-		
+
 		System.out.println("---------------------------------------------------------------------------------");
-		
+
 		for (Map.Entry<Long, ArrayList<Long[]>> entry : stopsWaitingTimes.entrySet()) {
 
 			long initialTime = 0;
@@ -323,18 +364,50 @@ public class MainVariables {
 						initialTime = data[1];
 						lastTime = data[2];
 
-					} else if(data[1] > lastTime) {
+					} else if (data[1] > lastTime) {
 
 						long waitingTime = (data[1] - lastTime);
 						System.out.println(waitingTime);
 						initialTime = data[1];
 						lastTime = data[2];
-						
+
 					}
 				}
 			}
-			
+
 			System.out.println();
+		}
+	}
+
+	private static void saveResults(ArrayList<String> interarrivalTimes) throws IOException {
+		if (interarrivalTimes != null) {
+			if (interarrivalTimes.isEmpty()) {
+				System.out.println("WARNING: intearrival times list is empty.");
+			} else {
+				final File file = new File(FILENAME);
+				if (file.exists()) {
+					if (file.delete()) {
+						System.out.println("LOG: " + FILENAME + " deleted.");
+					} else {
+						System.out.println("WARNING: " + FILENAME + " coul not be deleted.");
+					}
+				}
+				if (!file.createNewFile()) {
+					System.out.println("ERROR: " + FILENAME + " coul not be created.");
+				} else {
+					System.out.println("LOG: " + FILENAME + " created.");
+					final String FILE_HEADER = "stop_id,stop_name,time,Ai";
+					final FileWriter writer = new FileWriter(file);
+					writer.write(FILE_HEADER + System.lineSeparator());
+					for (String str : interarrivalTimes) {
+						writer.write(str + System.lineSeparator());
+					}
+					writer.flush();
+					writer.close();
+					System.out.println("LOG: " + FILENAME + " " + interarrivalTimes.size() +  " entries saved.");
+				}
+
+			}
 		}
 	}
 }

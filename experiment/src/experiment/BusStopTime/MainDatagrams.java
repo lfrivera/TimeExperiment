@@ -60,7 +60,7 @@ public class MainDatagrams {
 
 	public static void main(String[] args) throws ParseException {
 		init(131);
-		readDatagrams(131, 500300);
+		readDatagrams(131, 500300, false);
 		results();
 	}
 
@@ -97,10 +97,10 @@ public class MainDatagrams {
 	/*
 	 * This method read the datagrams file
 	 */
-	public static void readDatagrams(long lineId, long observerStop) throws ParseException {
+	public static void readDatagrams(long lineId, long observerStop, boolean printDate) throws ParseException {
 
 		String path = "data/output-30-APR-19-awk-sorted.csv";
-		ArrayList<Datagram> datagrams = DataSource.readDatagrams3(lineId, path);
+		ArrayList<Datagram> datagrams = DataSource.readDatagrams3(lineId, path, printDate);
 
 		for (int n = 0; n < datagrams.size(); n++) {
 
