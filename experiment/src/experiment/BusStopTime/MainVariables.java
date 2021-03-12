@@ -17,10 +17,17 @@ import experiment.model.SITMStop;
 public class MainVariables {
 	private static final boolean PRINT_INFO = false;
 	private static final long[] STOPS = {
+										 // North -> South
+										 AnalyzedStops.CHIMINANGOS_A2.getStopId(),
+										 AnalyzedStops.FLORA_A1.getStopId(),
 										 AnalyzedStops.SALOMIA_A1.getStopId(),
-										 AnalyzedStops.SALOMIA_B1.getStopId(),
 										 AnalyzedStops.POPULAR_A1.getStopId(),
-										 AnalyzedStops.POPULAR_B1.getStopId()
+										// South -> North
+										 AnalyzedStops.POPULAR_B2.getStopId(),
+										 AnalyzedStops.SALOMIA_B1.getStopId(),
+										 AnalyzedStops.FLORA_B1.getStopId(),
+										 AnalyzedStops.CHIMINANGOS_B1.getStopId(),
+										 AnalyzedStops.PASO_COMERCIO_B3.getStopId()
 										 };
 	private static final String FILENAME = System.getProperty("user.home") + File.separator + "interarrivalTimes.csv";
 
